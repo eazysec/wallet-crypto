@@ -199,12 +199,13 @@ function initializeNetwork(networkType, serverType);
 - **jQuery 3.6.0** : Manipulation DOM
 - **SecureWalletBundle 2.5.4** : Librairies blockchain (XRPL + Stellar)
 
-## 📞 Support
+## Informations générales
 
 ### Liens Utiles
 - **XRPL** : [Documentation officielle](https://xrpl.org/)
 - **Stellar** : [Documentation officielle](https://developers.stellar.org/)
 - **Tutoriels vidéo** : Intégrés dans l'interface
+- **Base** : MySuperSecuredWallet-V2.5.4.zip from Decrypto
 
 ### Problèmes Courants
 
@@ -222,7 +223,7 @@ function initializeNetwork(networkType, serverType);
 
 ## 🔄 Versions
 
-### v2.0 - Version Actuelle
+### v1.0 - Version Actuelle
 - Interface séparée en fichiers HTML/CSS/JS
 - Thèmes visuels par blockchain
 - Menus déroulants repositionnés
