@@ -1,0 +1,2 @@
+Pour un réseau sélectionné, ajouter la variable sélectionnée au titre pour situer l'utilisateur
+Génération d'un nouveau wallet $X
