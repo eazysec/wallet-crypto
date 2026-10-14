@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Politique de sécurité du contenu (F-10). Hors ligne : aucune connexion. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'">
+  <meta name="description" content="Étape 1 : créer ou restaurer un wallet, sur le poste hors ligne.">
+  <title>1 · Créer le wallet</title>
+  <link rel="stylesheet" href="../commun/commun.css">
+  <script src="../commun/securewalletbundle-2.5.4.js" defer></script>
+  <script src="../commun/format.js" defer></script>
+  <script src="../commun/fichiers.js" defer></script>
+  <script src="../commun/securite.js" defer></script>
+  <script src="../commun/coffre.js" defer></script>
+  <script src="../commun/cles.js" defer></script>
+  <script src="../commun/interface.js" defer></script>
+  <script src="../commun/poste.js" defer></script>
+  <script src="1-creer-wallet.js" defer></script>
+</head>
+<body class="zone-privee">
+
+<header>
+  <div class="bande" id="bande">
+    <div class="bande__lieu" id="bande-lieu"><span><b>Hors ligne</b> · Zone privée</span><span>Étape 1 · Créer le wallet</span></div>
+    <div class="bande__outils">
+      <label class="bande__reseau">Réseau
+        <select id="reseau">
+          <option value="XRPL">XRPL</option>
+          <option value="XLM">Stellar</option>
+        </select>
+      </label>
+      <button type="button" data-tiroir="tiroir-aide">Aide</button>
+    </div>
+  </div>
+  <ol class="fil-etapes" aria-label="Fil d'étapes">
+    <li class="etape-privee" aria-current="step">1 Créer</li>
+    <li class="etape-publique">2 Préparer</li>
+    <li class="etape-privee">3 Signer</li>
+    <li class="etape-publique">4 Envoyer</li>
+  </ol>
+</header>
+
+<div class="gabarit">
+  <nav class="rail" aria-label="Progression">
+    <ul>
+      <li><button class="progression__etape" type="button" data-etape="choisir" disabled>Choisir</button></li>
+      <li data-parcours="creer"><button class="progression__etape" type="button" data-etape="preparer" disabled>Se préparer</button></li>
+      <li data-parcours="creer"><button class="progression__etape" type="button" data-etape="mots" disabled>Écrire les mots</button></li>
+      <li data-parcours="creer"><button class="progression__etape" type="button" data-etape="verifier" disabled>Vérifier la copie</button></li>
+      <li data-parcours="restaurer" hidden><button class="progression__etape" type="button" data-etape="restaurer" disabled>Restaurer</button></li>
+      <li><button class="progression__etape" type="button" data-etape="fichier" disabled>Fichier chiffré</button></li>
+      <li><button class="progression__etape" type="button" data-etape="termine" disabled>Terminé</button></li>
+    </ul>
+    <p class="rail__etat" id="etat-poste">Aucun réseau détecté</p>
+  </nav>
+
+  <main class="action">
+    <div class="action__contenu">
+
+      <div class="pile pile--serree" id="alarme" hidden>
+        <p class="message message--danger" id="alarme-message" role="alert"><b>Ce poste semble connecté à un réseau.</b> La création et la restauration sont bloquées. Débranchez le câble et coupez le Wi-Fi : la page se déverrouille d'elle-même.</p>
+        <label class="rangee petit" for="derogation"><input type="checkbox" id="derogation"> Je continue quand même sur un poste connecté, en connaissance de cause.</label>
+      </div>
+
+      <section class="pile" id="vue-choisir" aria-labelledby="titre-choisir">
+        <h1 class="titre-page" id="titre-choisir">Créer ou restaurer un wallet</h1>
+        <div class="pile pile--serree">
+          <button class="option" type="button" id="aller-creer"><span class="option__titre">Créer un nouveau wallet</span><span class="option__texte">Vous obtiendrez une liste de mots à écrire sur papier.</span></button>
+          <button class="option" type="button" id="aller-restaurer"><span class="option__titre">Restaurer un wallet existant</span><span class="option__texte" id="restaurer-texte">À partir de vos mots, de vos numéros secrets Xaman ou d'un fichier wallet.</span></button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-preparer" aria-labelledby="titre-preparer" hidden>
+        <h1 class="titre-page" id="titre-preparer">Avant d'afficher vos mots</h1>
+        <p>Toute personne qui voit ces mots peut prendre vos fonds. Préparez une feuille et un stylo, et vérifiez que personne ne voit votre écran.</p>
+        <div class="champ">
+          <p class="champ__libelle" id="libelle-format">Format</p>
+          <div class="choix" id="format" role="group" aria-labelledby="libelle-format">
+            <button type="button" aria-pressed="true" data-valeur="24">24 mots</button>
+            <button type="button" aria-pressed="false" data-valeur="12">12 mots</button>
+            <button type="button" aria-pressed="false" data-valeur="xaman" id="format-xaman">Numéros secrets Xaman</button>
+          </div>
+          <p class="champ__aide" id="format-aide">24 et 12 mots se restaurent dans la plupart des wallets. Les numéros secrets (8 séries de 6 chiffres) servent pour Xaman.</p>
+        </div>
+        <details class="pile pile--serree">
+          <summary class="doux">Options avancées</summary>
+          <p class="message message--attention"><b>Longueur libre.</b> Un nombre de mots non standard ne se restaure qu'avec cette application.</p>
+          <div class="champ">
+            <label class="champ__libelle" for="longueur-libre">Nombre de mots (de 12 à 48)</label>
+            <input class="saisie" id="longueur-libre" type="number" min="12" max="48" inputmode="numeric" autocomplete="off">
+          </div>
+        </details>
+        <div class="rangee rangee--extremites">
+          <button class="bouton bouton--secondaire" type="button" data-retour>Retour</button>
+          <button class="bouton" type="button" id="afficher-mots">Personne ne voit mon écran : afficher les 24 mots</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-mots" aria-labelledby="titre-mots" hidden>
+        <h1 class="titre-page" id="titre-mots">Écrivez ces mots à la main</h1>
+        <p class="doux petit">Dans l'ordre, sur papier. Pas de photo, pas de copie dans un fichier.</p>
+        <ol class="mots" id="grille-mots" aria-label="Vos mots secrets"></ol>
+        <div class="rangee rangee--extremites">
+          <button class="bouton bouton--secondaire bouton--discret" type="button" id="masquer-mots">Masquer les mots</button>
+          <button class="bouton" type="button" id="mots-ecrits">C'est écrit, continuer</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-verifier" aria-labelledby="titre-verifier" hidden>
+        <h1 class="titre-page" id="titre-verifier">Vérifiez votre copie</h1>
+        <p class="doux petit">Recopiez ce qui est demandé depuis votre feuille, sans revenir à l'écran précédent.</p>
+        <div class="pile pile--serree" id="verifications-copie"></div>
+        <div class="rangee rangee--extremites">
+          <button class="bouton bouton--secondaire" type="button" id="revoir-mots">Revoir les mots</button>
+          <button class="bouton" type="button" id="copie-verifiee" disabled>Continuer</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-restaurer" aria-labelledby="titre-restaurer" hidden>
+        <h1 class="titre-page" id="titre-restaurer">Restaurer un wallet</h1>
+        <div class="choix" id="methode" role="group" aria-label="Méthode">
+          <button type="button" aria-pressed="true" data-valeur="mots">Mots</button>
+          <button type="button" aria-pressed="false" data-valeur="xaman" id="methode-xaman">Numéros secrets Xaman</button>
+          <button type="button" aria-pressed="false" data-valeur="fichier">Fichier wallet</button>
+        </div>
+        <div class="pile" id="bloc-saisie">
+          <div class="choix" id="nombre-mots" role="group" aria-label="Nombre de mots">
+            <button type="button" aria-pressed="true" data-valeur="12">12 mots</button>
+            <button type="button" aria-pressed="false" data-valeur="24">24 mots</button>
+            <button type="button" aria-pressed="false" data-valeur="autre">Autre</button>
+          </div>
+          <div class="champ" id="bloc-nombre-libre" hidden>
+            <label class="champ__libelle" for="nombre-libre">Nombre de mots (de 12 à 48)</label>
+            <input class="saisie" id="nombre-libre" type="number" min="12" max="48" inputmode="numeric" autocomplete="off">
+          </div>
+          <p class="champ__aide" id="saisie-aide">Vous pouvez coller tous les mots d'un coup dans la première case.</p>
+          <div class="saisie-mots" id="grille-saisie"></div>
+        </div>
+        <div class="pile" id="bloc-fichier" hidden>
+          <div class="depot" id="depot-wallet">
+            <p class="depot__nom" id="wallet-nom">Déposez ici votre fichier wallet</p>
+            <label class="bouton bouton--secondaire" for="fichier-wallet">Parcourir…</label>
+            <input class="visuellement-cache" type="file" id="fichier-wallet">
+          </div>
+          <div class="champ">
+            <label class="champ__libelle" for="mot-de-passe-wallet">Mot de passe du fichier</label>
+            <div class="saisie-groupe">
+              <input class="saisie" id="mot-de-passe-wallet" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="off">
+              <button class="bouton bouton--secondaire bouton--discret" type="button" data-basculer-secret="mot-de-passe-wallet">Afficher</button>
+            </div>
+          </div>
+        </div>
+        <p class="champ__erreur" id="erreur-restauration" role="alert" hidden></p>
+        <div class="rangee rangee--extremites">
+          <button class="bouton bouton--secondaire" type="button" data-retour>Retour</button>
+          <button class="bouton" type="button" id="restaurer" disabled>Restaurer</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-fichier" aria-labelledby="titre-fichier" hidden>
+        <h1 class="titre-page" id="titre-fichier">Enregistrer un fichier wallet chiffré</h1>
+        <p class="doux petit">Le fichier sert à signer plus vite à l'étape 3. Il est toujours chiffré : sans le mot de passe, il est inutilisable. Vos mots restent la vraie sauvegarde.</p>
+        <p class="message message--attention" id="note-en-clair" hidden><b>Le fichier ouvert n'était pas chiffré.</b> Enregistrez-en une version chiffrée, puis supprimez l'ancien.</p>
+        <p class="message message--attention" id="note-non-standard" hidden><b>Phrase non standard.</b> Ces mots ne se restaurent qu'avec cette application : vérifiez que l'adresse obtenue est bien la vôtre.</p>
+        <div class="champ">
+          <label class="champ__libelle" for="mot-de-passe">Mot de passe</label>
+          <div class="saisie-groupe">
+            <input class="saisie" id="mot-de-passe" type="password" autocomplete="new-password" spellcheck="false" autocapitalize="off">
+            <button class="bouton bouton--secondaire bouton--discret" type="button" data-basculer-secret="mot-de-passe">Afficher</button>
+          </div>
+          <div class="jauge" id="jauge" data-niveau="vide" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="jauge__texte" id="jauge-texte" aria-live="polite">Saisissez un mot de passe.</p>
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="mot-de-passe-2">Confirmer le mot de passe</label>
+          <input class="saisie" id="mot-de-passe-2" type="password" autocomplete="new-password" spellcheck="false" autocapitalize="off">
+          <p class="champ__aide" id="correspondance" aria-live="polite"></p>
+        </div>
+        <p class="fichier">Fichier produit : <code id="nom-wallet"></code></p>
+        <div class="rangee rangee--extremites">
+          <button class="bouton bouton--secondaire" type="button" id="sans-fichier">Continuer sans fichier</button>
+          <button class="bouton" type="button" id="enregistrer-wallet" disabled>Chiffrer et enregistrer</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-termine" aria-labelledby="titre-termine" hidden>
+        <h1 class="titre-page titre-reussite" id="titre-termine">Wallet prêt</h1>
+        <ul class="verifications" id="bilan"></ul>
+        <div class="champ">
+          <p class="champ__libelle" id="libelle-adresse">Adresse publique</p>
+          <p id="adresse-publique"></p>
+        </div>
+        <p class="petit">Vous en aurez besoin à l'étape 2, sur le poste en ligne. Un compte nouveau est activé sur le réseau à la réception de son premier dépôt.</p>
+        <div class="rangee rangee--extremites">
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+          <div class="rangee">
+            <button class="bouton bouton--secondaire" type="button" id="enregistrer-adresse">Enregistrer l'adresse publique</button>
+            <button class="bouton" type="button" id="terminer">Terminer et effacer l'écran</button>
+          </div>
+        </div>
+        <p class="fichier">Fichier sans secret : <code id="nom-adresse"></code></p>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="contexte" aria-label="Ce wallet">
+    <p class="contexte__titre">Ce wallet</p>
+    <p class="petit" id="contexte-chaine">Réseau : XRPL</p>
+    <p class="petit doux" id="contexte-vide">Pas encore d'adresse.</p>
+    <div class="pile pile--serree" id="contexte-compte" hidden>
+      <p class="petit doux">Adresse publique</p>
+      <p id="contexte-adresse"></p>
+    </div>
+  </aside>
+</div>
+
+<dialog class="tiroir" id="tiroir-aide" aria-labelledby="tiroir-aide-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-titre">Aide</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps" id="tiroir-aide-corps"></div>
+</dialog>
+<dialog class="tiroir" id="tiroir-technique" aria-labelledby="tiroir-technique-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-technique-titre">Détails techniques</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps">
+    <p class="doux">Informations publiques : elles peuvent être partagées sans risque.</p>
+    <dl class="cles-valeurs">
+      <dt>Algorithme</dt><dd id="algorithme"></dd>
+      <dt>Clé publique</dt><dd id="cle-publique"></dd>
+    </dl>
+  </div>
+</dialog>
+
+</body>
+</html>

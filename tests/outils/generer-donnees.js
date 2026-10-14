@@ -3,6 +3,11 @@
 // que ce que produisait l'ancienne version reste lisible et signable.
 //
 // Usage : node tests/outils/generer-donnees.js
+//
+// Ce script pilote l'ANCIENNE interface : il ne fonctionne plus depuis la refonte. Il est
+// gardé parce qu'il documente comment les fichiers de tests/donnees/ ont été produits.
+// Pour le relancer, il faudrait revenir à l'ancienne page (étiquette git debut-refonte-ui,
+// fichier OFFLINE_wallet/1.OFFLINE_wallet-generation.html) et adapter le chemin ci-dessous.
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -11,7 +16,7 @@ const V = require('../donnees/vecteurs');
 
 const racine = path.join(__dirname, '../..');
 const sortie = path.join(__dirname, '../donnees');
-const page1 = pathToFileURL(path.join(racine, 'OFFLINE_wallet/1.OFFLINE_wallet-generation.html')).href;
+const page1 = pathToFileURL(path.join(racine, 'hors-ligne/1-creer-wallet.html')).href;
 
 async function surChaine(page, chaine) {
   await page.selectOption('#blockchain-select', chaine);

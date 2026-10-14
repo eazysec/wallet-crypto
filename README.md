@@ -1,109 +1,139 @@
 # SecuredWallet
 
-## 🔐 Générateur de Wallet Sécurisé Multi-Blockchain
+Gérer un compte **XRPL** ou **Stellar** en gardant ses clés sur un poste qui ne
+se connecte jamais à internet.
 
-**MySuperSecuredWallet** est une suite d'outils offline-first pour gérer vos wallets cryptocurrency en toute sécurité sur les réseaux **XRPL** et **Stellar (XLM)**.
+Le principe : deux ordinateurs et une clé USB.
 
-### ✨ Fonctionnalités
+| Étape | Poste | Page | Ce qu'elle fait |
+|---|---|---|---|
+| 1 · Créer | hors ligne | `hors-ligne/1-creer-wallet.html` | Crée ou restaure un wallet : mots à écrire sur papier, fichier wallet chiffré, fichier d'adresse publique. |
+| 2 · Préparer | en ligne | `en-ligne/2-preparer.html` | Lit le compte sur le réseau et prépare une transaction, sans aucun secret. |
+| 3 · Signer | hors ligne | `hors-ligne/3-signer.html` | Montre la transaction en clair, puis la signe avec les mots ou le fichier wallet. |
+| 4 · Envoyer | en ligne | `en-ligne/4-envoyer.html` | Vérifie la transaction signée et l'envoie sur le réseau. |
 
-- 🔒 **Génération de wallet 100% offline**
-- 🌐 **Support XRPL et Stellar (XLM)**
-- 🔑 **Seed phrases compatibles (12/24 mots)**
-- 📝 **Signature de transactions offline**
-- 🚀 **Envoi sécurisé sur blockchain**
-- 🎨 **Interface moderne et épurée**
+Les pages s'ouvrent directement dans le navigateur (`file://`), sans
+installation ni serveur. Les pages en ligne (fond clair, bande sombre) ne
+voient jamais de secret ; les pages hors ligne (fond sombre, bande claire) ne
+se connectent à rien.
 
-### 🛡️ Workflow Sécurisé en 4 Étapes
+## Utilisation
 
-#### 1. **Génération de Wallet** (OFFLINE)
+1. **Poste hors ligne** — ouvrez la page 1, créez le wallet, écrivez les mots à
+   la main. Enregistrez le fichier d'adresse publique (sans secret) sur la clé USB.
+2. **Poste en ligne** — ouvrez la page 2, chargez l'adresse publique, préparez
+   la transaction et enregistrez le fichier `.a-signer.json`.
+3. **Poste hors ligne** — ouvrez la page 3, chargez ce fichier, **vérifiez le
+   montant et le destinataire**, puis signez. Enregistrez le `.signee.json`.
+4. **Poste en ligne** — ouvrez la page 4, chargez le fichier signé et envoyez-le
+   avant l'heure limite (15 minutes après la préparation).
+
+Commencez par Testnet (fonds fictifs) : la bande violette le signale.
+
+### Opérations
+
+Envoyer des fonds (XRP, XLM, jetons) · autoriser ou retirer un jeton · ajouter
+ou retirer un signataire · désactiver ou réactiver la clé principale · supprimer
+le compte. Une transaction d'un autre type est refusée à la signature : la
+page 3 ne signe que ce qu'elle sait traduire en clair.
+
+### Fichiers produits
+
+| Fichier | Contient un secret ? |
+|---|---|
+| `xrpl_rHsM-N5v3.xrplwallet` (ou `.xlmwallet`) | Oui, chiffré par mot de passe |
+| `xrpl_rHsM-N5v3.adresse-publique.txt` | Non |
+| `xrpl-test_2026-10-14_paiement-10-xrp_18aba7.a-signer.json` | Non |
+| `xrpl-test_2026-10-14_paiement-10-xrp_18aba7.signee.json` | Non (signée, plus modifiable) |
+
+Le nom sert aux humains ; les pages lisent la chaîne, le réseau et le type dans
+le contenu. Les six caractères de fin sont le début de l'**empreinte** de la
+transaction : la même aux étapes 2, 3 et 4.
+
+## Sécurité
+
+**Ce qui protège**
+
+- Les clés ne quittent jamais le poste hors ligne ; les pages 1 et 3 bloquent
+  les secrets si elles détectent un réseau (sauf dérogation explicite).
+- La page 3 affiche la transaction en clair avant toute signature et refuse les
+  types ou champs qu'elle ne sait pas traduire. **C'est la vérification du
+  montant et du destinataire, à cette étape, qui protège contre un poste en ligne
+  compromis.**
+- Une politique de sécurité du contenu interdit toute connexion aux pages hors
+  ligne, et limite les pages en ligne aux serveurs des réseaux.
+- Aucun contenu de fichier n'est interprété comme du HTML (test automatique).
+- Le fichier wallet est toujours chiffré ; un mot de passe trop faible est refusé.
+
+**Limites connues** (détail dans [docs/audit/findings.md](docs/audit/findings.md)
+et [docs/refonte-ui/constats-tests.md](docs/refonte-ui/constats-tests.md))
+
+- **Chiffrement du fichier wallet faible (F-01)** : la clé est un simple SHA-256
+  du mot de passe, sans sel ni dérivation coûteuse. Un fichier volé peut être
+  attaqué par force brute. Gardez-le comme un secret ; vos mots restent la vraie
+  sauvegarde. Correction prévue (P0-1).
+- **Effacement en mémoire non garanti (F-03)** : « Terminer et effacer l'écran »
+  vide l'écran et les variables de la page, pas la mémoire du navigateur.
+  Fermez le navigateur après usage.
+- **Réseau XRPL non vérifiable hors ligne (T-08)** : rien ne distingue une
+  transaction XRPL Mainnet d'une Testnet ; la page 3 n'affiche donc pas le réseau
+  XRPL. Vérifiez toujours comme si les fonds étaient réels.
+- **Clé ordinaire XRPL (RegularKey) non prise en charge (T-07)** : seules la clé
+  principale et un signataire (multisignature) peuvent signer.
+- **Paiement de jeton XRPL avec livraison partielle (F-12)** : signalé par un
+  avertissement, pas encore corrigé.
+- **Provenance du bundle crypto (F-09)** : `commun/securewalletbundle-2.5.4.js`
+  est identique au paquet npm publié, mais sa reconstruction n'est pas encore
+  vérifiable (P2-2).
+
+## Structure du dépôt
+
 ```
-📁 OFFLINE_wallet-generation.html
+hors-ligne/            pages 1 et 3 (HTML + script de page)
+en-ligne/              pages 2 et 4
+commun/
+  commun.css           styles des 4 pages (aucun style dans le HTML)
+  polices/             Atkinson Hyperlegible Next et Mono, embarquées
+  securewalletbundle-2.5.4.js   bibliothèques crypto (xrpl.js, Stellar SDK, bip39)
+  format.js            affichage des montants, adresses, empreintes, durées
+  fichiers.js          noms et format des fichiers de transaction
+  transactions.js      traduction en clair, empreinte, échéance
+  bordereau.js         affichage d'une transaction (pages 2 à 4)
+  cles.js              création et ouverture des clés
+  coffre.js            chiffrement du fichier wallet
+  securite.js          robustesse des mots de passe
+  poste.js             détection d'un réseau (pages hors ligne)
+  connexion.js         serveurs des réseaux (pages en ligne)
+  reseau.js            délai de validité, refus du réseau expliqués
+  historique.js        transactions préparées sur ce poste (données publiques)
+  interface.js         comportements partagés (adresses, choix, appui maintenu, tiroirs)
+  specimen.html        page de référence des composants
+docs/
+  audit/               audit technique et produit
+  refonte-ui/          plan de la refonte de l'interface et constats des tests
+tests/                 tests (voir ci-dessous)
 ```
-- Génération de nouveaux wallets
-- Récupération depuis seed-phrase
-- Support wallets numériques (Xaman)
-- Sauvegarde chiffrée par mot de passe
 
-#### 2. **Préparation de Transaction** (ONLINE)
+Les scripts sont des scripts classiques (pas de modules : ils doivent
+fonctionner en `file://`). Chaque module de `commun/` s'expose sous
+`window.Commun` dans les pages et par `require()` dans les tests.
+
+## Développement
+
+```sh
+npm ci                     # Playwright, pour les tests seulement
+npx playwright install chromium
+npm run test:unitaire      # node --test
+npm run test:e2e           # Playwright, pages en file://, réseau simulé
 ```
-📁 2.1-ONLINE_transaction-prepare.html
-```
-- Création de transactions (envoi, trustlines, etc.)
-- Vérification de comptes blockchain
-- Export pour signature offline
 
-#### 3. **Signature de Transaction** (OFFLINE)
-```
-📁 2.2-OFFLINE_transaction-sign.html
-```
-- Signature sécurisée hors ligne
-- Support seed-phrase ou fichier wallet
-- Détection automatique du réseau
+- `tests/unitaire/` : modules de `commun/`, contrastes des couleurs, et un
+  contrôle qui interdit `innerHTML`, `eval`, les styles et scripts dans le HTML.
+- `tests/e2e/` : chaque page, le cycle complet sur les deux chaînes, la
+  politique de sécurité du contenu, le clavier. Les pilotes (`tests/e2e/pilotes/`)
+  sont seuls à connaître l'écran. Aucune requête ne sort vers internet : le nœud
+  XRPL et le serveur Horizon sont simulés.
+- `tests/donnees/` : vecteurs connus (dont SEP-0005) et références.
 
-#### 4. **Envoi sur Blockchain** (ONLINE)
-```
-📁 2.3-ONLINE_transaction-send.html
-```
-- Vérification finale de transaction
-- Envoi sur MainNet/TestNet
-- Suivi des résultats
-
-### 🚀 Utilisation Rapide
-
-1. **Créez votre wallet** avec `OFFLINE_wallet-generation.html` (PC déconnecté)
-2. **Préparez votre transaction** avec `2.1-ONLINE_transaction-prepare.html`
-3. **Signez offline** avec `2.2-OFFLINE_transaction-sign.html` (PC déconnecté)
-4. **Envoyez** avec `2.3-ONLINE_transaction-send.html`
-
-### 🔧 Technologies
-
-- **Frontend :** HTML5, CSS3, JavaScript (ES6+)
-- **Crypto :** SecureWalletBundle@2.5.4
-- **UI :** Bootstrap 5.2 + Design System custom
-- **Sécurité :** AES-256-CBC, BIP39, offline-first
-
-### 🌐 Réseaux Supportés
-
-| Blockchain | MainNet | TestNet | Explorateur |
-|------------|---------|---------|-------------|
-| **XRPL** | ✅ | ✅ | [XRPScan](https://xrpscan.com) |
-| **Stellar** | ✅ | ✅ | [LumenScan](https://lumenscan.io) |
-
-### ⚡ Fonctionnalités Avancées
-
-- **Multi-signature** : Support des comptes signataires
-- **Trustlines** : Gestion complète des assets
-- **Account Management** : Suppression, gestion des clés maîtres
-- **Auto-détection** : Reconnaissance automatique des réseaux
-- **Responsive** : Interface adaptative mobile/desktop
-
-### 🛡️ Sécurité
-
-- **🔒 Offline-first** : Clés privées jamais exposées online
-- **🔐 Chiffrement** : AES-256 avec dérivation de clé sécurisée  
-- **🎯 Isolation** : Séparation stricte online/offline
-- **✅ Vérification** : Contrôles d'intégrité des transactions
-
-### 📋 Prérequis
-
-- Navigateur moderne (Chrome, Firefox, Safari, Edge)
-- JavaScript activé
-- Pour sécurité maximale : PC offline dédié
-
-### ⚠️ Recommandations de Sécurité
-
-1. **Utilisez un PC offline** pour les étapes 1 et 3
-2. **Sauvegardez vos seed-phrases** sur papier
-3. **Testez avec de petits montants** d'abord
-4. **Vérifiez toujours** les adresses de destination
-5. **Gardez vos mots de passe** en sécurité
-
-### Références
-
-- **Version de base :** 2.5.4
-- **Compatibilité :** XRPL, Stellar (XLM)
-- **Base :** MySuperSecuredWallet-V2.5.4 (Decrypto)
-
----
-
-> **⚡ Tip :** Commencez toujours par tester sur TestNet avant d'utiliser MainNet avec de vrais fonds !
+Règles du code : texte inséré avec `textContent` uniquement ; aucun style ni
+script dans le HTML ; noms en français.

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Politique de sécurité du contenu (F-10). Hors ligne : aucune connexion. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'">
+  <meta name="description" content="Étape 3 : vérifier puis signer une transaction, sur le poste hors ligne.">
+  <title>3 · Signer</title>
+  <link rel="stylesheet" href="../commun/commun.css">
+  <script src="../commun/securewalletbundle-2.5.4.js" defer></script>
+  <script src="../commun/format.js" defer></script>
+  <script src="../commun/fichiers.js" defer></script>
+  <script src="../commun/securite.js" defer></script>
+  <script src="../commun/reseau.js" defer></script>
+  <script src="../commun/coffre.js" defer></script>
+  <script src="../commun/cles.js" defer></script>
+  <script src="../commun/transactions.js" defer></script>
+  <script src="../commun/interface.js" defer></script>
+  <script src="../commun/bordereau.js" defer></script>
+  <script src="../commun/poste.js" defer></script>
+  <script src="3-signer.js" defer></script>
+</head>
+<body class="zone-privee">
+
+<header>
+  <div class="bande" id="bande">
+    <div class="bande__lieu" id="bande-lieu"><span><b>Hors ligne</b> · Zone privée</span><span>Étape 3 · Signer</span></div>
+    <div class="bande__outils">
+      <span class="bande__reseau">Réseau <span class="bande__valeur est-attente" id="reseau-lu">lu dans le fichier</span></span>
+      <button type="button" data-tiroir="tiroir-aide">Aide</button>
+    </div>
+  </div>
+  <div class="bandeau-testnet" id="bandeau-testnet" hidden>Testnet · fonds fictifs, sans valeur</div>
+  <ol class="fil-etapes" aria-label="Fil d'étapes">
+    <li class="etape-privee">1 Créer</li>
+    <li class="etape-publique">2 Préparer</li>
+    <li class="etape-privee" aria-current="step">3 Signer</li>
+    <li class="etape-publique">4 Envoyer</li>
+  </ol>
+</header>
+
+<div class="gabarit gabarit--guide-avant">
+  <nav class="rail" aria-label="Progression">
+    <ul>
+      <li><button class="progression__etape" type="button" data-etape="0">Charger</button></li>
+      <li><button class="progression__etape" type="button" data-etape="1">Vérifier</button></li>
+      <li><button class="progression__etape" type="button" data-etape="2">Choisir la clé</button></li>
+      <li><button class="progression__etape" type="button" data-etape="3">Signer</button></li>
+      <li><button class="progression__etape" type="button" data-etape="4">Enregistrer</button></li>
+    </ul>
+    <p class="rail__etat" id="etat-poste">Aucun réseau détecté</p>
+  </nav>
+
+  <main class="action">
+    <div class="action__contenu">
+
+      <div class="pile pile--serree" id="alarme" hidden>
+        <p class="message message--danger" id="alarme-message" role="alert"><b>Ce poste semble connecté à un réseau.</b> Les clés et la signature sont bloquées. Débranchez le câble et coupez le Wi-Fi : la page se déverrouille d'elle-même.</p>
+        <label class="rangee petit" for="derogation"><input type="checkbox" id="derogation"> Je continue quand même sur un poste connecté, en connaissance de cause.</label>
+      </div>
+
+      <section class="pile" id="vue-charger" aria-labelledby="titre-charger">
+        <h1 class="titre-page" id="titre-charger">Chargez la transaction à signer</h1>
+        <p class="doux">C'est le fichier préparé à l'étape 2 sur le poste en ligne, apporté par clé USB.</p>
+        <div class="depot" id="depot">
+          <p>Déposez ici le fichier <code>.a-signer.json</code></p>
+          <label class="bouton bouton--secondaire" for="fichier">Parcourir…</label>
+          <input class="visuellement-cache" type="file" id="fichier" accept=".json,application/json">
+        </div>
+        <p class="champ__erreur" id="erreur-chargement" role="alert" hidden></p>
+        <details class="pile pile--serree" id="contenu-refuse" hidden>
+          <summary class="doux">Contenu du fichier, pour information</summary>
+          <pre class="texte-brut" id="contenu-refuse-texte"></pre>
+        </details>
+        <details class="pile pile--serree">
+          <summary class="doux">Coller le contenu à la place</summary>
+          <label class="champ__libelle" for="contenu-colle">Contenu du fichier à signer</label>
+          <textarea class="saisie saisie--donnees" id="contenu-colle" rows="5" spellcheck="false" autocomplete="off"></textarea>
+          <div class="rangee rangee--fin"><button class="bouton bouton--secondaire" type="button" id="utiliser-colle">Utiliser ce contenu</button></div>
+        </details>
+      </section>
+
+      <section class="pile" id="vue-verifier" aria-labelledby="titre-verifier" hidden>
+        <h1 class="titre-page" id="titre-verifier">Vérifiez ce que vous allez signer</h1>
+        <p class="fichier">Fichier : <code id="fichier-nom"></code></p>
+        <div id="bordereau"></div>
+        <div class="rangee rangee--extremites">
+          <p class="empreinte">Empreinte<b id="empreinte"></b></p>
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+        </div>
+        <div class="rangee rangee--fin">
+          <button class="bouton bouton--secondaire" type="button" id="pas-la-bonne">Ce n'est pas la bonne</button>
+          <button class="bouton" type="button" id="choisir-cle">C'est correct, choisir ma clé</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-cle" aria-labelledby="titre-cle" hidden>
+        <h1 class="titre-page" id="titre-cle">Avec quelle clé signer ?</h1>
+        <div class="choix" id="methode" role="group" aria-label="Méthode">
+          <button type="button" aria-pressed="true" data-valeur="fichier">Fichier wallet</button>
+          <button type="button" aria-pressed="false" data-valeur="mots">Mots</button>
+        </div>
+        <div class="pile" id="bloc-fichier">
+          <div class="depot" id="depot-wallet">
+            <p class="depot__nom" id="wallet-nom">Déposez ici votre fichier wallet</p>
+            <label class="bouton bouton--secondaire" for="fichier-wallet">Parcourir…</label>
+            <input class="visuellement-cache" type="file" id="fichier-wallet">
+          </div>
+          <div class="champ">
+            <label class="champ__libelle" for="mot-de-passe">Mot de passe du fichier</label>
+            <div class="saisie-groupe">
+              <input class="saisie" id="mot-de-passe" type="password" autocomplete="off" spellcheck="false" autocapitalize="off">
+              <button class="bouton bouton--secondaire bouton--discret" type="button" data-basculer-secret="mot-de-passe">Afficher</button>
+            </div>
+          </div>
+          <div class="rangee rangee--fin"><button class="bouton" type="button" id="ouvrir-fichier">Déverrouiller</button></div>
+        </div>
+        <div class="pile" id="bloc-mots" hidden>
+          <div class="champ">
+            <label class="champ__libelle" for="mots">Vos mots, dans l'ordre, séparés par des espaces (ou vos numéros secrets Xaman)</label>
+            <div class="saisie-groupe">
+              <input class="saisie saisie--donnees" id="mots" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" data-secret>
+              <button class="bouton bouton--secondaire bouton--discret" type="button" data-basculer-secret="mots">Afficher</button>
+            </div>
+            <p class="champ__aide">Vérifiez que personne ne voit votre écran avant d'afficher les mots.</p>
+          </div>
+          <div class="rangee rangee--fin"><button class="bouton" type="button" id="ouvrir-mots">Utiliser ces mots</button></div>
+        </div>
+        <p class="champ__erreur" id="erreur-cle" role="alert" hidden></p>
+        <p id="cle-reconnue" hidden></p>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="vers-signature" disabled>Continuer</button></div>
+      </section>
+
+      <section class="pile" id="vue-signer" aria-labelledby="titre-signer" hidden>
+        <h1 class="titre-page" id="titre-signer">Signer la transaction</h1>
+        <p id="resume-signature"></p>
+        <p id="resume-destinataire" hidden></p>
+        <p class="message message--attention" id="note-frais" hidden></p>
+        <div class="rangee rangee--fin">
+          <button class="bouton bouton--maintenir" type="button" id="bouton-signer" data-maintenir data-texte-confirme="Transaction signée"><span class="bouton__libelle">Maintenir pour signer</span></button>
+        </div>
+        <p class="champ__erreur" id="erreur-signature" role="alert" hidden></p>
+      </section>
+
+      <section class="pile" id="vue-enregistrer" aria-labelledby="titre-enregistrer" hidden>
+        <h1 class="titre-page titre-reussite" id="titre-enregistrer">Transaction signée</h1>
+        <p class="fichier">Fichier produit : <code id="nom-signee"></code></p>
+        <p class="empreinte">Empreinte<b id="empreinte-signee"></b></p>
+        <p>Étape suivante : sur le poste en ligne, ouvrez l'étape 4 et chargez ce fichier avant l'heure limite.</p>
+        <p class="petit doux">Le mot de passe et les mots ont été retirés des champs, et la clé n'est plus utilisée par la page.</p>
+        <div class="rangee rangee--extremites">
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+          <div class="rangee">
+            <button class="bouton bouton--secondaire" type="button" id="terminer">Terminer et effacer l'écran</button>
+            <button class="bouton" type="button" id="enregistrer">Enregistrer le fichier signé</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="contexte" aria-label="Ce que vous signez">
+    <p class="contexte__titre" id="contexte-titre">Ce que vous signez</p>
+    <p class="petit doux" id="contexte-vide">Aucune transaction chargée.</p>
+    <ol class="pile pile--serree petit" id="contexte-conseils" hidden>
+      <li>Le montant et l'actif.</li>
+      <li>Le destinataire en entier, milieu compris.</li>
+      <li>Le tag, si vous envoyez vers une plateforme.</li>
+      <li id="conseil-reseau">Le réseau : Mainnet veut dire fonds réels.</li>
+      <li>L'empreinte : la même qu'à l'étape 2.</li>
+    </ol>
+    <div class="pile pile--serree" id="contexte-recap" hidden>
+      <p class="petit doux" id="recap-type"></p>
+      <p class="montant" id="recap-montant" hidden></p>
+      <p id="recap-vers" hidden></p>
+      <p class="empreinte">Empreinte<b id="recap-empreinte"></b></p>
+    </div>
+  </aside>
+</div>
+
+<dialog class="tiroir" id="tiroir-aide" aria-labelledby="tiroir-aide-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-titre">Aide</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps" id="tiroir-aide-corps"></div>
+</dialog>
+<dialog class="tiroir" id="tiroir-technique" aria-labelledby="tiroir-technique-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-technique-titre">Détails techniques</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps">
+    <p class="doux" id="technique-legende">Contenu décodé de la transaction.</p>
+    <pre id="technique-contenu"></pre>
+  </div>
+</dialog>
+
+</body>
+</html>

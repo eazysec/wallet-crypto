@@ -1,14 +1,6 @@
-// Réseau simulé pour les pages en ligne : bibliothèques servies localement, nœud XRPL
-// et serveur Horizon factices. Aucune requête ne sort vers internet.
-const fs = require('node:fs');
-const { donnee } = require('./outils');
+// Réseau simulé pour les pages en ligne : nœud XRPL et serveur Horizon factices.
+// Aucune requête ne sort vers internet.
 
-const CDN = {
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css': ['cdn/bootstrap-5.2.0-beta1.min.css', 'text/css'],
-  'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js': ['cdn/bootstrap-5.2.0-beta1.bundle.min.js', 'application/javascript'],
-  'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js': ['cdn/jquery-3.6.0.min.js', 'application/javascript'],
-  'https://unpkg.com/securewalletbundle@2.5.4/dist/SecureWalletBundle.browser.min.js': ['cdn/securewalletbundle-2.5.4.browser.min.js', 'application/javascript'],
-};
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-headers': '*',
@@ -18,12 +10,13 @@ const CORS = {
 /**
  * État du réseau simulé.
  * xrpl.registre : numéro du dernier registre validé ; xrpl.resultat : code renvoyé pour une transaction.
+ * xrpl.pannes : { commande: message } pour simuler une erreur du nœud sur une commande.
  * xlm.refus : code de refus renvoyé par Horizon (par exemple 'tx_too_late'), sinon succès.
  */
 function nouvelEtat({ xrplComptes = {}, xlmComptes = {}, registre = 90000000, resultat = 'tesSUCCESS', refus = null } = {}) {
   return {
     bloquees: [],
-    xrpl: { comptes: xrplComptes, registre, resultat, requetes: [], soumises: [] },
+    xrpl: { comptes: xrplComptes, registre, resultat, pannes: {}, requetes: [], soumises: [] },
     xlm: { comptes: xlmComptes, refus, soumises: [] },
   };
 }
@@ -32,10 +25,6 @@ async function brancherReseau(page, etat) {
   await page.route('**/*', (route) => {
     const url = route.request().url();
     if (url.startsWith('file:')) return route.continue();
-    if (CDN[url]) {
-      const [fichier, type] = CDN[url];
-      return route.fulfill({ body: fs.readFileSync(donnee(fichier)), contentType: type, headers: CORS });
-    }
     if (url.startsWith('https://horizon')) return repondreHorizon(route, etat.xlm);
     etat.bloquees.push(url);
     return route.abort();
@@ -55,6 +44,7 @@ function repondreXrpl(req, x) {
   const ok = (result) => ({ id: req.id, status: 'success', type: 'response', result });
   const ko = (error, message) => ({ id: req.id, status: 'error', type: 'response', error, error_message: message, request: req });
   const compte = x.comptes[req.account];
+  if (x.pannes[req.command]) return ko('internal', x.pannes[req.command]);
   switch (req.command) {
     case 'server_info':
       return ok({ info: {

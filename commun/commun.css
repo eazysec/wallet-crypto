@@ -1,0 +1,607 @@
+/* =====================================================================
+   SecuredWallet · feuille de style commune aux 4 pages
+   Règles : une couleur, un sens, toujours doublée d'un mot.
+   La zone se lit à la luminosité : .zone-publique (claire) / .zone-privee (sombre).
+   Aucun style dans le HTML : tout passe par des classes.
+   ===================================================================== */
+
+/* ---------- Polices embarquées (licence OFL, voir polices/) ---------- */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("polices/atkinson-hyperlegible-next-latin.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("polices/atkinson-hyperlegible-mono-latin.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* ---------- Variables communes ---------- */
+:root {
+  --police-texte: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  --police-donnees: "Atkinson Hyperlegible Mono", ui-monospace, "DejaVu Sans Mono", monospace;
+
+  --t-petit: 13px;
+  --t-normal: 15px;
+  --t-grand: 17px;
+  --t-titre: 21px;
+  --t-page: 24px;
+  --t-montant: 32px;
+
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+
+  --rayon: 4px;
+  --rayon-carte: 6px;
+  --largeur-action: 640px;
+  --duree-maintien: 1200ms; /* même valeur que DUREE_MAINTIEN dans interface.js */
+
+  /* Couleurs identiques dans les deux zones */
+  --alarme: #F2C230;
+  --alarme-encre: #1A1500;
+  --testnet: #5B4A8A;
+  --testnet-encre: #FFFFFF;
+  --pastille-publique: #FFFFFF;
+  --pastille-publique-encre: #15181B;
+  --pastille-privee: #16191C;
+  --pastille-privee-encre: #E7EAEC;
+}
+
+/* Zone publique (en ligne, étapes 2 et 4) : page claire, bande sombre.
+   Ce sont aussi les valeurs par défaut. */
+:root,
+.zone-publique {
+  --fond: #FFFFFF;
+  --fond-2: #F3F5F6;
+  --encre: #15181B;
+  --doux: #5C646A;
+  --filet: #DADFE2;
+  --bordure: #B9C0C5;
+  --champ: #FFFFFF;
+  --champ-bordure: #858E95; /* 3:1 au moins avec le fond (WCAG 1.4.11) */
+  --bande: #1E2328;
+  --bande-encre: #FFFFFF;
+  --survol: #E3E8EC;
+  --action: #1F4FD1;
+  --action-encre: #FFFFFF;
+  --attention-filet: #E0A800;
+  --attention-fond: #FFF4CC;
+  --attention-encre: #5E4300;
+  --danger: #B9382A;
+  --danger-fond: #FCEAE7;
+  --danger-plein: #B9382A;
+  --danger-plein-encre: #FFFFFF;
+  --reussite: #1E7A45;
+  color-scheme: light;
+}
+
+/* Zone privée (hors ligne, étapes 1 et 3) : page sombre, bande claire. */
+.zone-privee {
+  --fond: #16191C;
+  --fond-2: #1B1F23;
+  --encre: #E7EAEC;
+  --doux: #9BA4AA;
+  --filet: #30373D;
+  --bordure: #3A4147;
+  --champ: #1D2226;
+  --champ-bordure: #646D75; /* 3:1 au moins avec le fond et le champ */
+  --bande: #E7EAEC;
+  --bande-encre: #16191C;
+  --survol: #262C31;
+  --action: #8FB0FF;
+  --action-encre: #16191C;
+  --attention-filet: #F2C230;
+  --attention-fond: #2A2512;
+  --attention-encre: #F5DC8A;
+  --danger: #F0806B;
+  --danger-fond: #2D1C1A;
+  --danger-plein: #E0624B;
+  --danger-plein-encre: #16191C;
+  --reussite: #5CCB8A;
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--police-texte);
+  font-size: var(--t-normal);
+  line-height: 1.5;
+}
+
+.zone-publique,
+.zone-privee {
+  background: var(--fond);
+  color: var(--encre);
+}
+
+/* Une page de l'application : en-tête puis gabarit sur toute la hauteur. */
+body.zone-publique,
+body.zone-privee {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+[hidden] { display: none !important; }
+
+:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+h1, h2, h3, h4, p, dl, dd, ol, ul, figure { margin: 0; }
+
+code, .donnees { font-family: var(--police-donnees); }
+
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Mise en page simple ---------- */
+.pile { display: grid; gap: var(--e4); align-content: start; }
+.pile--serree { gap: var(--e2); }
+.rangee { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e3); }
+.rangee--fin { justify-content: flex-end; }
+.rangee--extremites { justify-content: space-between; }
+
+.titre-page { font-size: var(--t-page); line-height: 1.2; }
+.titre-section { font-size: var(--t-titre); line-height: 1.25; }
+.titre-reussite { color: var(--reussite); }
+.titre-danger { color: var(--danger); }
+.doux { color: var(--doux); }
+.petit { font-size: var(--t-petit); }
+
+/* ---------- Bande de zone (en tête de page) ---------- */
+.bande {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2) var(--e4);
+  padding: var(--e3) var(--e5);
+  background: var(--bande);
+  color: var(--bande-encre);
+  font-size: 14.5px;
+}
+.bande--alarme { background: var(--alarme); color: var(--alarme-encre); }
+.bande__lieu { display: flex; flex-wrap: wrap; gap: var(--e1) var(--e4); }
+.bande__outils { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2); }
+.bande__outils button {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 5px 11px;
+  border-radius: var(--rayon);
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.bande__outils button:focus-visible,
+.bande__reseau select:focus-visible { outline-color: currentColor; }
+.bande__reseau { display: flex; align-items: center; gap: var(--e2); font-size: 13.5px; }
+.bande__reseau select {
+  font: inherit;
+  font-weight: 700;
+  padding: 5px 8px;
+  border-radius: var(--rayon);
+  border: 1px solid currentColor;
+  background: var(--bande);
+  color: var(--bande-encre);
+  cursor: pointer;
+}
+.zone-publique .bande__reseau select { color-scheme: dark; }
+/* Réseau affiché sans être modifiable (pages 1, 3 et 4) : même libellé que l'étape 2, sans cadre
+   (un cadre ferait croire à un bouton). */
+.bande__valeur { font-weight: 700; }
+.bande__valeur.est-attente { font-weight: 400; }
+.zone-privee .bande__reseau select { color-scheme: light; }
+
+.bandeau-testnet {
+  padding: 6px var(--e5);
+  background: var(--testnet);
+  color: var(--testnet-encre);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* ---------- Fil d'étapes ---------- */
+.fil-etapes {
+  list-style: none;
+  margin: 0;
+  padding: var(--e3) var(--e5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--t-petit);
+  border-bottom: 1px solid var(--filet);
+}
+.fil-etapes li { padding: 3px 10px; border-radius: var(--rayon); border: 1px solid var(--bordure); }
+.fil-etapes .etape-publique { background: var(--pastille-publique); color: var(--pastille-publique-encre); }
+.fil-etapes .etape-privee { background: var(--pastille-privee); color: var(--pastille-privee-encre); }
+.fil-etapes [aria-current="step"] { outline: 2px solid var(--action); outline-offset: 1px; font-weight: 700; }
+
+/* ---------- Gabarit : rail | action | contexte ---------- */
+.gabarit {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 300px;
+  grid-template-areas: "rail action contexte";
+  flex: 1;
+}
+.gabarit--sans-contexte { grid-template-columns: 220px minmax(0, 1fr); grid-template-areas: "rail action"; }
+.rail {
+  grid-area: rail;
+  display: grid;
+  align-content: start;
+  gap: var(--e3);
+  padding: var(--e4) var(--e3);
+  background: var(--fond-2);
+  border-right: 1px solid var(--filet);
+}
+.action { grid-area: action; min-width: 0; padding: var(--e5) var(--e6) 48px; }
+.action__contenu { display: grid; gap: var(--e4); max-width: var(--largeur-action); margin-inline: auto; }
+.contexte {
+  grid-area: contexte;
+  display: grid;
+  align-content: start;
+  gap: var(--e3);
+  min-width: 0;
+  padding: var(--e4) var(--e4) 28px;
+  background: var(--fond-2);
+  border-left: 1px solid var(--filet);
+}
+.contexte__titre { font-size: var(--t-petit); font-weight: 700; color: var(--doux); }
+
+/* Menu des opérations (zone publique) */
+.rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+/* Titre de groupe, comme les titres du panneau de droite ; le filet le sépare des entrées. */
+.menu__groupe { margin: var(--e2) 10px 2px; padding-top: var(--e3); border-top: 1px solid var(--filet); font-size: 12.5px; font-weight: 700; color: var(--doux); }
+.menu__entree {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--e2) 10px;
+  border: 0;
+  border-radius: var(--rayon);
+  background: transparent;
+  color: var(--encre);
+  font: inherit;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+.menu__entree:hover { background: var(--survol); }
+/* Avant la vérification du compte, les opérations sont indisponibles et doivent le paraître. */
+.menu__entree:disabled { color: var(--doux); cursor: not-allowed; }
+.menu__entree:disabled:hover { background: transparent; }
+.menu__entree[aria-current="page"] { background: var(--survol); font-weight: 700; }
+.menu__note { display: block; font-size: 12px; font-weight: 400; color: var(--danger); }
+
+/* Progression (zone privée, parcours linéaires) */
+.progression__etape {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--rayon);
+  background: transparent;
+  color: var(--doux);
+  font: inherit;
+  font-size: 14.5px;
+  text-align: left;
+  white-space: nowrap;
+}
+.progression__etape::before { content: "○"; width: 1em; flex: none; text-align: center; }
+.progression__etape.est-fait { color: var(--encre); cursor: pointer; }
+.progression__etape.est-fait::before { content: "✓"; }
+.progression__etape.est-fait:hover { background: var(--survol); }
+.progression__etape[aria-current="step"] { color: var(--encre); font-weight: 700; background: var(--survol); }
+.progression__etape[aria-current="step"]::before { content: "●"; color: var(--action); }
+.progression__etape:disabled { cursor: default; }
+.rail__etat { margin: var(--e2) 10px 0; font-size: var(--t-petit); color: var(--doux); }
+.rail__etat::before { content: "✓ "; color: var(--encre); font-weight: 700; }
+.rail__etat.est-alerte { color: var(--danger); }
+.rail__etat.est-alerte::before { content: "✗ "; color: inherit; }
+
+/* Petits écrans : après les règles du rail, pour les remplacer. */
+/* L'écran principal passe avant le contexte ; .gabarit--guide-avant garde le contexte en tête
+   quand il est un mode d'emploi à lire avant d'agir (étape 3). */
+@media (max-width: 1180px) {
+  .gabarit { grid-template-columns: 200px minmax(0, 1fr); grid-template-areas: "rail action" "rail contexte"; }
+  .gabarit--guide-avant { grid-template-areas: "rail contexte" "rail action"; }
+  .contexte { border-left: 0; border-top: 1px solid var(--filet); }
+  .gabarit--guide-avant .contexte { border-top: 0; border-bottom: 1px solid var(--filet); }
+  .contexte .secondaire { display: none; }
+}
+@media (max-width: 760px) {
+  .gabarit,
+  .gabarit--sans-contexte { grid-template-columns: minmax(0, 1fr); grid-template-areas: "rail" "action" "contexte"; min-height: 0; }
+  .gabarit--guide-avant { grid-template-areas: "rail" "contexte" "action"; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--filet); padding: var(--e2) var(--e3); }
+  .rail ul { display: flex; overflow-x: auto; gap: 6px; }
+  .menu__entree { white-space: nowrap; }
+  .rail .menu__groupe,
+  .rail .rail__etat { display: none; }
+  .action { padding: var(--e5) var(--e4) 40px; }
+}
+
+/* ---------- Boutons ---------- */
+.bouton {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--rayon);
+  background: var(--action);
+  color: var(--action-encre);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.bouton:focus-visible { outline-offset: 3px; }
+/* Champ de fichier caché : son bouton « Parcourir… » montre le focus clavier. */
+label.bouton:has(+ .visuellement-cache:focus-visible) { outline: 2px solid var(--action); outline-offset: 3px; }
+.bouton:disabled { cursor: not-allowed; opacity: 0.45; }
+.bouton--secondaire { background: transparent; color: var(--encre); border-color: var(--champ-bordure); }
+.bouton--discret { min-height: 0; padding: var(--e2) var(--e3); font-weight: 400; font-size: 14px; }
+.bouton--danger { background: var(--danger-plein); color: var(--danger-plein-encre); }
+
+/* Appui maintenu : le fond se remplit pendant la durée de maintien. */
+.bouton--maintenir {
+  background: transparent;
+  border-color: var(--action);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.bouton--maintenir::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--action);
+  transition: width 0.15s ease-out;
+}
+.bouton--maintenir.est-maintenu::before { width: 100%; transition: width var(--duree-maintien) linear; }
+.bouton--maintenir.est-confirme::before { width: 100%; }
+.bouton--maintenir .bouton__libelle { position: relative; z-index: 1; color: var(--action); mix-blend-mode: difference; }
+.bouton--maintenir:disabled { border-style: dashed; }
+/* Signature sur un poste connecté, par dérogation : le geste reste le même, la couleur dit le danger. */
+.bouton--maintenir.est-risque { --action: var(--danger-plein); }
+
+.lien {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--action);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Champs ---------- */
+.champ { display: grid; gap: 6px; }
+.champ__libelle { font-size: var(--t-petit); color: var(--doux); }
+.champ__aide { font-size: var(--t-petit); color: var(--doux); }
+.champ__erreur { font-size: 13.5px; color: var(--danger); }
+
+.saisie {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--champ-bordure);
+  border-radius: var(--rayon);
+  background: var(--champ);
+  color: var(--encre);
+  font: inherit;
+  font-size: 16px;
+}
+.saisie:focus { outline: 2px solid var(--action); outline-offset: 1px; border-color: var(--action); }
+.saisie--donnees { font-family: var(--police-donnees); font-size: 15px; }
+.saisie.est-invalide { border-color: var(--danger); }
+.saisie-groupe { display: flex; gap: var(--e2); }
+.saisie-groupe .saisie { flex: 1; min-width: 0; }
+
+/* Choix segmenté */
+.choix { display: flex; flex-wrap: wrap; gap: 6px; }
+.choix button {
+  padding: 7px 12px;
+  border: 1px solid var(--champ-bordure);
+  border-radius: var(--rayon);
+  background: transparent;
+  color: var(--encre);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.choix button[aria-pressed="true"] { border: 2px solid var(--action); padding: 6px 11px; font-weight: 700; }
+
+/* Grands choix (opérations, créer ou restaurer) */
+.option {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 14px var(--e4);
+  border: 1px solid var(--champ-bordure);
+  border-radius: var(--rayon-carte);
+  background: transparent;
+  color: var(--encre);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.option:hover { border-color: var(--action); }
+.option:disabled { cursor: not-allowed; opacity: 0.45; border-color: var(--champ-bordure); }
+.option__titre { font-size: var(--t-grand); font-weight: 700; }
+.option__texte { font-size: 14px; color: var(--doux); }
+
+/* ---------- Messages : quatre niveaux, chacun avec un mot ---------- */
+.message { padding: var(--e2) var(--e3); border-left: 3px solid var(--encre); border-radius: 0 var(--rayon) var(--rayon) 0; font-size: 14px; }
+.message--attention { background: var(--attention-fond); border-color: var(--attention-filet); color: var(--attention-encre); }
+.message--danger { background: var(--danger-fond); border-color: var(--danger); color: var(--danger); }
+.message--reussite { border-color: var(--reussite); }
+.message--reussite strong { color: var(--reussite); }
+
+.etat { font-size: 14px; color: var(--doux); }
+.etat::before { content: "✓ "; color: var(--encre); font-weight: 700; }
+.verifie { font-size: 13.5px; color: var(--reussite); }
+.verifie::before { content: "✓ "; font-weight: 700; }
+.verifications { list-style: none; padding: 0; display: grid; gap: 6px; }
+.verifications li::before { content: "✓ "; font-weight: 700; }
+.verifications li.est-manquant { color: var(--danger); }
+.verifications li.est-manquant::before { content: "✗ "; }
+.verifications li.est-neutre { color: var(--doux); }
+.verifications li.est-neutre::before { content: "– "; }
+
+/* ---------- Données ---------- */
+/* Blocs séparés par un espacement visuel, pas par des espaces : la copie donne l'adresse exacte. */
+.adresse { display: flex; flex-wrap: wrap; column-gap: 0.4em; font-family: var(--police-donnees); font-size: 15.5px; line-height: 1.55; }
+.adresse span { white-space: nowrap; }
+.adresse__bout { font-weight: 700; }
+.adresse__milieu { opacity: 0.74; }
+
+.montant { font-size: var(--t-montant); font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.montant__devise { font-size: var(--t-grand); margin-left: 6px; }
+.valeur { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.empreinte { font-size: var(--t-petit); color: var(--doux); line-height: 1.3; }
+.empreinte b { display: block; font-family: var(--police-donnees); font-size: 15px; letter-spacing: 0.04em; color: var(--encre); }
+
+.fichier { font-size: 13.5px; color: var(--doux); overflow-wrap: anywhere; }
+.fichier code { color: var(--encre); }
+
+.cles-valeurs { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--e1) 14px; font-size: 14px; }
+.cles-valeurs dt { color: var(--doux); }
+.cles-valeurs dd { font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* ---------- Bordereau de transaction ---------- */
+.bordereau { display: grid; gap: var(--e3); }
+.bordereau__tete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px var(--e3); }
+.bordereau__type { font-size: 19px; }
+.bordereau__technique { margin-left: var(--e2); font-family: var(--police-donnees); font-size: 12.5px; font-weight: 400; color: var(--doux); }
+.bordereau__reseau { font-size: 14px; font-weight: 700; }
+.bordereau__reseau span { font-weight: 400; color: var(--doux); }
+
+.champs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--filet); }
+.champs > div { min-width: 0; padding: 10px 0 11px; border-bottom: 1px solid var(--filet); }
+.champs > .large { grid-column: 1 / -1; }
+.champs > .droite { padding-left: 14px; border-left: 1px solid var(--filet); }
+.champs dt { margin-bottom: 2px; font-size: var(--t-petit); color: var(--doux); }
+
+.brut { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px var(--e4); font-family: var(--police-donnees); font-size: 12.5px; }
+.brut dt { color: var(--doux); }
+.brut dd { overflow-wrap: anywhere; }
+.texte-brut { margin: 0; padding: var(--e3); border: 1px solid var(--filet); border-radius: var(--rayon); font-family: var(--police-donnees); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ---------- Dépôt de fichier ---------- */
+.depot {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 26px var(--e4);
+  border: 1px dashed var(--champ-bordure);
+  border-radius: var(--rayon-carte);
+  text-align: center;
+}
+.depot--charge,
+.depot--refuse {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: start;
+  padding: var(--e3) 14px;
+  border-style: solid;
+  text-align: left;
+}
+.depot--refuse { border-color: var(--danger); }
+.depot__nom { font-size: 14px; overflow-wrap: anywhere; }
+.depot--charge .depot__nom::before { content: "✓ "; font-weight: 700; }
+
+/* ---------- Mots de la seed ---------- */
+.mots {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-rows: repeat(8, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0 18px;
+}
+.mots li { display: flex; align-items: baseline; gap: 10px; min-width: 0; padding: 6px 0; border-bottom: 1px solid var(--filet); }
+.mots__numero { width: 2ch; flex: none; text-align: right; font-family: var(--police-donnees); font-size: var(--t-petit); color: var(--doux); }
+.mots__mot { font-size: var(--t-grand); font-weight: 700; overflow-wrap: anywhere; }
+.mots { user-select: none; } /* pas de copie : les mots s'écrivent à la main */
+.mots--6-rangs { grid-template-rows: repeat(6, auto); }
+.mots--4-rangs { grid-template-rows: repeat(4, auto); }
+@media (max-width: 460px) { .mots { grid-template-rows: repeat(12, auto); } }
+
+/* Saisie des mots, une case par mot */
+.saisie-mots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e2) 10px; }
+.saisie-mots label { display: grid; grid-template-columns: 2.5ch minmax(0, 1fr); gap: 6px; align-items: center; }
+.saisie-mots .saisie { padding: 7px 8px; }
+@media (max-width: 460px) { .saisie-mots { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Vérification de la copie */
+.copie { display: grid; grid-template-columns: 6.5em minmax(0, 1fr) 1.5em; gap: 10px; align-items: center; }
+.copie__marque { font-weight: 700; color: var(--reussite); visibility: hidden; }
+.copie__marque.est-juste { visibility: visible; }
+
+/* ---------- Jauge de robustesse ---------- */
+.jauge { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e1); }
+.jauge i { height: 6px; border-radius: 2px; background: var(--filet); }
+.jauge[data-niveau="faible"] i:first-child { background: var(--danger); }
+.jauge[data-niveau="acceptable"] i:nth-child(-n+3) { background: var(--attention-filet); }
+.jauge[data-niveau="solide"] i { background: var(--encre); }
+.jauge__texte { font-size: 13.5px; }
+.jauge[data-niveau="faible"] + .jauge__texte { color: var(--danger); }
+
+/* ---------- Carte ---------- */
+.carte { display: grid; gap: var(--e2); padding: var(--e3) 14px; border: 1px solid var(--filet); border-radius: var(--rayon-carte); background: var(--fond); }
+
+/* ---------- Tiroir (dialog natif) ---------- */
+.tiroir {
+  width: min(440px, 100%);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--bordure);
+  background: var(--fond);
+  color: var(--encre);
+}
+.tiroir::backdrop { background: rgba(0, 0, 0, 0.4); }
+.tiroir[open] { animation: tiroir-entree 0.18s ease-out; }
+@keyframes tiroir-entree { from { transform: translateX(28px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.tiroir__tete { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); padding: 14px 18px; border-bottom: 1px solid var(--filet); }
+.tiroir__titre { font-size: 18px; }
+.tiroir__corps { display: grid; gap: 14px; padding: 18px; font-size: 14.5px; }
+.tiroir pre { margin: 0; padding: var(--e3); overflow-x: auto; border: 1px solid var(--filet); border-radius: var(--rayon); font-family: var(--police-donnees); font-size: 12.5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tiroir[open] { animation: none; }
+  .bouton--maintenir::before { transition: none; }
+  .bouton--maintenir.est-maintenu::before { transition: width var(--duree-maintien) steps(4, end); }
+}

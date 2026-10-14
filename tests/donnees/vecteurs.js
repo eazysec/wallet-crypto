@@ -24,6 +24,11 @@ const ADRESSES = {
   xlmInconnu: 'GCATS5YOVB6ROX2WUNKGNQ2MP3GMXDMKSG2O4N5CLX3A6W4PZGZZI55U', // graine brute 32 × 0x02, absent du réseau
 };
 
+// Clé secrète du vecteur officiel SEP-0005 test 1 (publique, elle aussi).
+const CLES = {
+  xlmSep5test1: 'SBGWSG6BTNCKCOB3DIFBGCVMUPQFYPA2G4O34RMTB343OYPXU5DJDVMN',
+};
+
 const MOT_DE_PASSE = 'mot-de-passe-de-test';
 
-module.exports = { MOTS, ADRESSES, MOT_DE_PASSE };
+module.exports = { MOTS, ADRESSES, CLES, MOT_DE_PASSE };

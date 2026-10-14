@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Politique de sécurité du contenu (F-10). En ligne : seulement les serveurs des réseaux (commun/connexion.js). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; connect-src wss://xrplcluster.com wss://s.altnet.rippletest.net:51233 https://horizon.stellar.org https://horizon-testnet.stellar.org">
+  <meta name="description" content="Étape 2 : préparer une transaction sur le poste en ligne, avant de la signer hors ligne.">
+  <title>2 · Préparer</title>
+  <link rel="stylesheet" href="../commun/commun.css">
+  <script src="../commun/securewalletbundle-2.5.4.js" defer></script>
+  <script src="../commun/format.js" defer></script>
+  <script src="../commun/fichiers.js" defer></script>
+  <script src="../commun/securite.js" defer></script>
+  <script src="../commun/reseau.js" defer></script>
+  <script src="../commun/connexion.js" defer></script>
+  <script src="../commun/historique.js" defer></script>
+  <script src="../commun/transactions.js" defer></script>
+  <script src="../commun/interface.js" defer></script>
+  <script src="../commun/bordereau.js" defer></script>
+  <script src="2-preparer.js" defer></script>
+</head>
+<body class="zone-publique">
+
+<header>
+  <div class="bande">
+    <div class="bande__lieu"><span><b>En ligne</b> · Zone publique</span><span>Étape 2 · Préparer</span></div>
+    <div class="bande__outils">
+      <label class="bande__reseau">Réseau
+        <select id="reseau">
+          <optgroup label="XRP Ledger (XRP)">
+            <option value="XRPL:main">XRPL Mainnet · fonds réels</option>
+            <option value="XRPL:test" selected>XRPL Testnet · fonds fictifs</option>
+          </optgroup>
+          <optgroup label="Stellar (XLM)">
+            <option value="XLM:main">Stellar Mainnet · fonds réels</option>
+            <option value="XLM:test">Stellar Testnet · fonds fictifs</option>
+          </optgroup>
+        </select>
+      </label>
+      <button type="button" data-tiroir="tiroir-aide">Aide</button>
+      <button type="button" data-tiroir="tiroir-reglages">Réglages</button>
+    </div>
+  </div>
+  <div class="bandeau-testnet" id="bandeau-testnet" hidden>Testnet · fonds fictifs, sans valeur</div>
+  <ol class="fil-etapes" aria-label="Fil d'étapes">
+    <li class="etape-privee">1 Créer</li>
+    <li class="etape-publique" aria-current="step">2 Préparer</li>
+    <li class="etape-privee">3 Signer</li>
+    <li class="etape-publique">4 Envoyer</li>
+  </ol>
+</header>
+
+<div class="gabarit">
+  <nav class="rail" aria-label="Opérations">
+    <ul>
+      <li><button class="menu__entree" type="button" data-operation="envoyer" disabled>Envoyer des fonds</button></li>
+      <li><button class="menu__entree" type="button" data-operation="jeton-ajout" disabled>Autoriser un jeton</button></li>
+      <li><button class="menu__entree" type="button" data-operation="jeton-retrait" disabled>Retirer un jeton</button></li>
+    </ul>
+    <p class="menu__groupe">Gestion avancée</p>
+    <ul>
+      <li><button class="menu__entree" type="button" data-operation="signataires" disabled>Signataires et clé principale</button></li>
+      <li><button class="menu__entree" type="button" data-operation="suppression" disabled>Supprimer le compte<span class="menu__note">Irréversible</span></button></li>
+    </ul>
+  </nav>
+
+  <main class="action">
+    <div class="action__contenu">
+
+      <!-- Compte -->
+      <section class="pile" id="vue-compte" aria-labelledby="titre-compte">
+        <h1 class="titre-page" id="titre-compte">Votre compte</h1>
+        <div class="champ">
+          <label class="champ__libelle" for="compte-adresse">Adresse publique de votre compte</label>
+          <div class="saisie-groupe">
+            <input class="saisie saisie--donnees" id="compte-adresse" spellcheck="false" autocomplete="off" autocapitalize="off">
+            <label class="bouton bouton--secondaire bouton--discret" for="fichier-adresse">Charger le fichier</label>
+            <input class="visuellement-cache" type="file" id="fichier-adresse" accept=".txt,text/plain">
+          </div>
+          <p class="champ__aide">Le fichier <code>.adresse-publique.txt</code> créé à l'étape 1 évite de la recopier.</p>
+        </div>
+        <p class="champ__erreur" id="erreur-compte" role="alert" hidden></p>
+        <div class="message message--attention pile pile--serree" id="compte-absent" role="status" hidden>
+          <p><b id="compte-absent-titre"></b></p>
+          <p id="compte-absent-texte"></p>
+          <p><a class="lien" id="compte-absent-fontaine" target="_blank" rel="noopener noreferrer" hidden>Recevoir des fonds de test</a></p>
+        </div>
+        <p class="message message--attention" id="hors-ligne" hidden><b>Ce poste semble hors ligne.</b> La préparation demande une connexion au réseau.</p>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="verifier-compte">Vérifier le compte</button></div>
+      </section>
+
+      <!-- Envoyer des fonds -->
+      <section class="pile" id="vue-envoyer" aria-labelledby="titre-envoyer" hidden>
+        <h1 class="titre-page" id="titre-envoyer">Envoyer des fonds</h1>
+        <div class="champ">
+          <span class="champ__libelle">Actif</span>
+          <div class="choix" id="envoi-actifs" role="group" aria-label="Actif"></div>
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="envoi-vers">Destinataire</label>
+          <input class="saisie saisie--donnees" id="envoi-vers" spellcheck="false" autocomplete="off" autocapitalize="off">
+          <p class="champ__aide" id="envoi-vers-apercu" hidden></p>
+        </div>
+        <p class="message message--attention" id="envoi-premiere-fois" hidden><b>Première fois que vous envoyez à cette adresse depuis ce poste.</b> Vérifiez-la en entier, y compris le milieu : les adresses pièges imitent le début et la fin.</p>
+        <div class="champ">
+          <label class="champ__libelle" for="envoi-tag" id="envoi-tag-libelle">Tag de destination</label>
+          <input class="saisie" id="envoi-tag" spellcheck="false" autocomplete="off">
+          <p class="champ__aide">Exigé par la plupart des plateformes d'échange. Sans lui, les fonds arrivent sur la plateforme mais ne sont pas crédités sur votre compte.</p>
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="envoi-montant">Montant</label>
+          <div class="saisie-groupe">
+            <input class="saisie" id="envoi-montant" inputmode="decimal" autocomplete="off">
+            <button class="bouton bouton--secondaire bouton--discret" type="button" id="envoi-max">Max</button>
+          </div>
+          <p class="champ__aide" id="envoi-disponible"></p>
+        </div>
+        <p class="champ__erreur" id="envoi-erreur" role="alert" hidden></p>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="envoi-preparer">Préparer la transaction</button></div>
+      </section>
+
+      <!-- Autoriser un jeton -->
+      <section class="pile" id="vue-jeton-ajout" aria-labelledby="titre-jeton-ajout" hidden>
+        <h1 class="titre-page" id="titre-jeton-ajout">Autoriser un jeton</h1>
+        <p class="doux">Un jeton est émis par un tiers, l'émetteur. L'autoriser permet à votre compte de le recevoir, jusqu'au plafond choisi.</p>
+        <div class="champ">
+          <label class="champ__libelle" for="ajout-code">Code du jeton</label>
+          <input class="saisie saisie--donnees" id="ajout-code" spellcheck="false" autocomplete="off" autocapitalize="off">
+          <p class="champ__aide" id="ajout-code-aide"></p>
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="ajout-emetteur">Émetteur du jeton</label>
+          <input class="saisie saisie--donnees" id="ajout-emetteur" spellcheck="false" autocomplete="off" autocapitalize="off">
+          <p class="champ__aide">Vérifiez cette adresse auprès d'une source fiable : n'importe qui peut émettre un jeton nommé USD.</p>
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="ajout-plafond">Plafond accepté</label>
+          <input class="saisie" id="ajout-plafond" inputmode="decimal" autocomplete="off">
+          <p class="champ__aide">Montant maximal de ce jeton que votre compte acceptera de détenir. Chaque jeton autorisé augmente la réserve.</p>
+        </div>
+        <p class="champ__erreur" id="ajout-erreur" role="alert" hidden></p>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="ajout-preparer">Préparer la transaction</button></div>
+      </section>
+
+      <!-- Retirer un jeton -->
+      <section class="pile" id="vue-jeton-retrait" aria-labelledby="titre-jeton-retrait" hidden>
+        <h1 class="titre-page" id="titre-jeton-retrait">Retirer un jeton</h1>
+        <p class="doux">Un jeton se retire quand son solde est à zéro. La réserve correspondante est alors libérée.</p>
+        <div class="choix" id="retrait-jetons" role="group" aria-label="Jeton à retirer"></div>
+        <ul class="pile pile--serree" id="retrait-bloques"></ul>
+        <p class="doux" id="retrait-aucun" hidden>Ce compte n'a autorisé aucun jeton.</p>
+        <p class="champ__erreur" id="retrait-erreur" role="alert" hidden></p>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="retrait-preparer" disabled>Préparer le retrait</button></div>
+      </section>
+
+      <!-- Signataires et clé principale -->
+      <section class="pile" id="vue-signataires" aria-labelledby="titre-signataires" hidden>
+        <h1 class="titre-page" id="titre-signataires">Signataires et clé principale</h1>
+        <dl class="cles-valeurs" id="signataires-etat"></dl>
+        <div class="champ">
+          <label class="champ__libelle" for="signataire-adresse">Ajouter un signataire</label>
+          <input class="saisie saisie--donnees" id="signataire-adresse" spellcheck="false" autocomplete="off" autocapitalize="off">
+          <p class="champ__aide">Gardez les mots ou le fichier de ce compte signataire : il servira à signer à la place de la clé principale.</p>
+        </div>
+        <div class="rangee rangee--fin"><button class="bouton" type="button" id="signataire-ajouter">Préparer l'ajout</button></div>
+        <div class="pile pile--serree" id="bloc-retrait-signataire" hidden>
+          <h2 class="titre-section">Retirer le signataire</h2>
+          <p class="petit doux">Possible tant que la clé principale est active.</p>
+          <div class="rangee rangee--fin"><button class="bouton bouton--secondaire" type="button" id="signataire-retirer">Préparer le retrait</button></div>
+        </div>
+        <div class="pile pile--serree" id="bloc-cle">
+          <h2 class="titre-section titre-danger" id="cle-titre">Désactiver la clé principale</h2>
+          <p class="petit doux" id="cle-explication"></p>
+          <div class="rangee rangee--fin">
+            <button class="bouton bouton--danger" type="button" id="cle-desactiver" hidden>Préparer la désactivation</button>
+            <button class="bouton" type="button" id="cle-reactiver" hidden>Préparer la réactivation</button>
+          </div>
+        </div>
+        <p class="champ__erreur" id="signataires-erreur" role="alert" hidden></p>
+      </section>
+
+      <!-- Supprimer le compte -->
+      <section class="pile" id="vue-suppression" aria-labelledby="titre-suppression" hidden>
+        <h1 class="titre-page titre-danger" id="titre-suppression">Supprimer le compte</h1>
+        <p>Le compte disparaîtra du réseau. Son solde restant partira vers l'adresse indiquée.</p>
+        <ul class="verifications" id="suppression-conditions"></ul>
+        <div class="champ">
+          <label class="champ__libelle" for="suppression-vers">Adresse qui recevra le solde</label>
+          <input class="saisie saisie--donnees" id="suppression-vers" spellcheck="false" autocomplete="off" autocapitalize="off">
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="suppression-tag" id="suppression-tag-libelle">Tag de destination, si demandé</label>
+          <input class="saisie" id="suppression-tag" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="champ">
+          <label class="champ__libelle" for="suppression-confirmation" id="suppression-confirmation-libelle">Pour confirmer, tapez les 4 derniers caractères du compte à supprimer</label>
+          <input class="saisie saisie--donnees" id="suppression-confirmation" spellcheck="false" autocomplete="off" autocapitalize="off">
+        </div>
+        <p class="champ__erreur" id="suppression-erreur" role="alert" hidden></p>
+        <div class="rangee rangee--fin"><button class="bouton bouton--danger" type="button" id="suppression-preparer" disabled>Préparer la suppression</button></div>
+      </section>
+
+      <!-- Vérifier avant d'exporter -->
+      <section class="pile" id="vue-verifier" aria-labelledby="titre-verifier" hidden>
+        <h1 class="titre-page" id="titre-verifier">Vérifiez avant d'exporter</h1>
+        <div id="bordereau"></div>
+        <div class="rangee rangee--extremites">
+          <p class="empreinte">Empreinte<b id="empreinte"></b></p>
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+        </div>
+        <p id="heure-limite"></p>
+        <div class="rangee rangee--fin">
+          <button class="bouton bouton--secondaire" type="button" id="modifier">Modifier</button>
+          <button class="bouton" type="button" id="exporter">Exporter pour signature</button>
+        </div>
+      </section>
+
+      <!-- Exporté -->
+      <section class="pile" id="vue-exporte" aria-labelledby="titre-exporte" hidden>
+        <h1 class="titre-page titre-reussite" id="titre-exporte">Transaction prête à signer</h1>
+        <p class="fichier">Fichier produit : <code id="export-nom"></code></p>
+        <p>Étape suivante : sur le poste hors ligne, ouvrez l'étape 3 et chargez ce fichier. Le temps restant s'affiche à droite.</p>
+        <p class="petit doux">Passé ce délai, le réseau refusera la transaction. Rien n'est perdu : il suffira de la préparer à nouveau.</p>
+        <div class="rangee rangee--fin"><button class="bouton bouton--secondaire" type="button" id="autre-preparation">Préparer une autre transaction</button></div>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="contexte" aria-label="Votre compte">
+    <p class="contexte__titre">Votre compte</p>
+    <p class="petit doux" id="contexte-vide">Aucun compte vérifié.</p>
+    <div class="pile pile--serree" id="contexte-compte" hidden>
+      <p id="compte-affiche"></p>
+      <p class="verifie" id="compte-verifie"></p>
+      <dl class="cles-valeurs">
+        <dt>Disponible</dt><dd id="compte-disponible"></dd>
+        <dt>Réserve</dt><dd id="compte-reserve"></dd>
+        <dt class="secondaire">Solde total</dt><dd class="secondaire" id="compte-solde"></dd>
+      </dl>
+      <p class="petit doux">La réserve est bloquée par le réseau tant que le compte existe. Elle n'est pas dépensable.</p>
+      <dl class="cles-valeurs secondaire" id="compte-jetons"></dl>
+      <p><a class="lien" id="lien-fontaine" target="_blank" rel="noopener noreferrer" hidden>Recevoir des fonds de test</a></p>
+      <button class="lien" type="button" id="changer-compte">Changer de compte</button>
+    </div>
+    <div class="carte" id="contexte-encours" hidden>
+      <p class="contexte__titre">Transaction en cours</p>
+      <p id="encours-resume"></p>
+      <p id="encours-delai"></p>
+      <p class="empreinte">Empreinte<b id="encours-empreinte"></b></p>
+    </div>
+  </aside>
+</div>
+
+<dialog class="tiroir" id="tiroir-aide" aria-labelledby="tiroir-aide-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-titre">Aide</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps" id="tiroir-aide-corps"></div>
+</dialog>
+<dialog class="tiroir" id="tiroir-reglages" aria-labelledby="tiroir-reglages-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-reglages-titre">Réglages</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps">
+    <h3>Historique sur ce poste</h3>
+    <label class="rangee" for="historique-actif"><input type="checkbox" id="historique-actif"> Signaler les destinataires jamais utilisés et reconnaître les transactions préparées ici</label>
+    <p class="champ__aide">L'historique ne contient que des adresses et des empreintes publiques. Il reste sur ce poste.</p>
+    <div class="rangee"><button class="bouton bouton--secondaire bouton--discret" type="button" id="historique-effacer">Effacer l'historique</button><span class="petit doux" id="historique-efface" hidden>Historique effacé.</span></div>
+  </div>
+</dialog>
+<dialog class="tiroir" id="tiroir-technique" aria-labelledby="tiroir-technique-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-technique-titre">Détails techniques</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps">
+    <p class="doux">Contenu de la transaction qui sera exportée.</p>
+    <pre id="technique-contenu"></pre>
+  </div>
+</dialog>
+
+</body>
+</html>

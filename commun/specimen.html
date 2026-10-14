@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'">
+  <title>Spécimen des composants · SecuredWallet</title>
+  <link rel="stylesheet" href="commun.css">
+  <link rel="stylesheet" href="specimen.css">
+  <script src="format.js" defer></script>
+  <script src="interface.js" defer></script>
+</head>
+<body class="zone-publique">
+
+<header class="specimen-entete">
+  <h1 class="titre-page">Spécimen des composants</h1>
+  <p class="doux">Page de référence de <code>commun.css</code> : chaque composant dans ses états, dans les deux zones. Toutes les données sont fictives.</p>
+  <nav aria-label="Zones">
+    <a href="#publique">Zone publique</a>
+    <a href="#privee">Zone privée</a>
+  </nav>
+</header>
+
+<!-- ===================================================================== -->
+<section id="publique" class="zone-publique specimen-zone" aria-labelledby="titre-publique">
+  <h2 id="titre-publique" class="specimen-titre">Zone publique · en ligne</h2>
+
+  <div class="specimen-cadre">
+    <div class="bande">
+      <div class="bande__lieu"><span><b>En ligne</b> · Zone publique</span><span>Étape 2 · Préparer</span></div>
+      <div class="bande__outils">
+        <label class="bande__reseau">Réseau
+          <select>
+            <optgroup label="XRP Ledger (XRP)">
+              <option selected>XRPL Mainnet · fonds réels</option>
+              <option>XRPL Testnet · fonds fictifs</option>
+            </optgroup>
+            <optgroup label="Stellar (XLM)">
+              <option>Stellar Mainnet · fonds réels</option>
+              <option>Stellar Testnet · fonds fictifs</option>
+            </optgroup>
+          </select>
+        </label>
+        <button type="button" data-tiroir="tiroir-aide">Aide</button>
+        <button type="button" data-tiroir="tiroir-reglages">Réglages</button>
+      </div>
+    </div>
+    <ol class="fil-etapes" aria-label="Fil d'étapes">
+      <li class="etape-privee">1 Créer</li>
+      <li class="etape-publique" aria-current="step">2 Préparer</li>
+      <li class="etape-privee">3 Signer</li>
+      <li class="etape-publique">4 Envoyer</li>
+    </ol>
+    <div class="gabarit">
+      <nav class="rail" aria-label="Opérations">
+        <ul>
+          <li><button class="menu__entree" type="button" aria-current="page">Envoyer des fonds</button></li>
+          <li><button class="menu__entree" type="button">Autoriser un jeton</button></li>
+          <li><button class="menu__entree" type="button">Retirer un jeton</button></li>
+        </ul>
+        <p class="menu__groupe">Gestion avancée</p>
+        <ul>
+          <li><button class="menu__entree" type="button">Signataires et clé principale</button></li>
+          <li><button class="menu__entree" type="button">Supprimer le compte<span class="menu__note">Irréversible</span></button></li>
+        </ul>
+      </nav>
+      <div class="action">
+        <div class="action__contenu">
+          <h3 class="titre-page">Envoyer des fonds</h3>
+          <div class="champ">
+            <span class="champ__libelle">Actif</span>
+            <div class="choix" role="group" aria-label="Actif">
+              <button type="button" aria-pressed="true">XRP</button>
+              <button type="button" aria-pressed="false">USD · émis par rHb9 … yTh</button>
+            </div>
+          </div>
+          <div class="champ">
+            <label class="champ__libelle" for="specimen-destinataire">Destinataire</label>
+            <input class="saisie saisie--donnees" id="specimen-destinataire" value="rKt4WzP9bC7hN3qMvX8sJd2FgE6yRa5uTo" spellcheck="false" autocomplete="off">
+            <p class="champ__aide" data-adresse="rKt4WzP9bC7hN3qMvX8sJd2FgE6yRa5uTo"></p>
+          </div>
+          <p class="message message--attention"><b>Première fois que vous envoyez à cette adresse depuis ce poste.</b> Vérifiez-la en entier, y compris le milieu.</p>
+          <div class="champ">
+            <label class="champ__libelle" for="specimen-tag">Tag de destination</label>
+            <input class="saisie" id="specimen-tag" value="104557" inputmode="numeric">
+            <p class="champ__aide">Exigé par la plupart des plateformes d'échange.</p>
+          </div>
+          <div class="champ">
+            <label class="champ__libelle" for="specimen-montant">Montant</label>
+            <div class="saisie-groupe">
+              <input class="saisie" id="specimen-montant" value="1250" inputmode="decimal">
+              <button class="bouton bouton--secondaire bouton--discret" type="button">Max</button>
+            </div>
+            <p class="champ__aide">Frais réseau : 0,000012 XRP.</p>
+          </div>
+          <div class="rangee rangee--fin"><button class="bouton" type="button">Préparer la transaction</button></div>
+        </div>
+      </div>
+      <aside class="contexte" aria-label="Votre compte">
+        <p class="contexte__titre">Votre compte</p>
+        <p data-adresse="rLp8x2Q4mVZsE3fJ9uKc6TyWb7HdRgA5Nn"></p>
+        <p class="verifie">Vérifié sur le réseau à 10 h 35</p>
+        <dl class="cles-valeurs">
+          <dt>Disponible</dt><dd><span data-montant="1740.1"></span> XRP</dd>
+          <dt>Réserve</dt><dd><span data-montant="1.2"></span> XRP</dd>
+          <dt class="secondaire">Jetons</dt><dd class="secondaire">250 USD</dd>
+        </dl>
+      </aside>
+    </div>
+  </div>
+
+  <div class="specimen-planches">
+    <div class="specimen-planche">
+      <h3>Boutons</h3>
+      <div class="rangee">
+        <button class="bouton" type="button">Principal</button>
+        <button class="bouton bouton--secondaire" type="button">Secondaire</button>
+        <button class="bouton bouton--danger" type="button">Danger</button>
+      </div>
+      <div class="rangee">
+        <button class="bouton" type="button" disabled>Désactivé</button>
+        <button class="bouton bouton--secondaire bouton--discret" type="button">Discret</button>
+        <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+      </div>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Champs</h3>
+      <div class="champ">
+        <label class="champ__libelle" for="specimen-emetteur">Émetteur du jeton</label>
+        <input class="saisie saisie--donnees" id="specimen-emetteur" placeholder="Adresse de l'émetteur" spellcheck="false">
+      </div>
+      <div class="champ">
+        <label class="champ__libelle" for="specimen-invalide">Destinataire</label>
+        <input class="saisie saisie--donnees est-invalide" id="specimen-invalide" value="rKt4WzP9" aria-describedby="specimen-invalide-erreur">
+        <p class="champ__erreur" id="specimen-invalide-erreur">Adresse incomplète : une adresse XRPL compte 25 à 35 caractères.</p>
+      </div>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Messages</h3>
+      <p class="message">Information : une phrase, sans couleur particulière.</p>
+      <p class="message message--attention"><b>Attention.</b> Vérifiez avant de continuer.</p>
+      <p class="message message--danger"><b>Bloqué.</b> Ce destinataire exige un tag.</p>
+      <p class="message message--reussite"><strong>Réussi.</strong> Transaction diffusée.</p>
+      <p class="etat">Aucun réseau détecté sur ce poste.</p>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Grands choix</h3>
+      <button class="option" type="button"><span class="option__titre">Créer un nouveau wallet</span><span class="option__texte">Vous obtiendrez une liste de mots à écrire sur papier.</span></button>
+      <button class="option" type="button"><span class="option__titre">Restaurer un wallet existant</span><span class="option__texte">À partir de vos mots, de vos numéros secrets Xaman ou d'un fichier wallet.</span></button>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Dépôt de fichier</h3>
+      <div class="depot"><p>Déposez ici le fichier <code>.signee.json</code></p><button class="bouton bouton--secondaire" type="button">Parcourir…</button></div>
+      <div class="depot depot--charge"><span class="depot__nom">xrpl-main_2026-10-14_paiement-1250-xrp_7f3a91.signee.json</span><button class="bouton bouton--secondaire bouton--discret" type="button">Changer</button></div>
+      <div class="depot depot--refuse"><span class="depot__nom">xrpl_rLp8-A5Nn.xrplwallet</span><button class="bouton bouton--secondaire bouton--discret" type="button">Changer</button></div>
+      <p class="champ__erreur">Ce fichier est un wallet, pas une transaction. Il se charge à l'étape 3.</p>
+    </div>
+
+    <div class="specimen-planche specimen-planche--large">
+      <h3>Bordereau de transaction</h3>
+      <div class="bordereau">
+        <p class="fichier">Fichier : <code>xrpl-main_2026-10-14_paiement-1250-xrp_7f3a91.signee.json</code></p>
+        <div class="bordereau__tete">
+          <h4 class="bordereau__type">Paiement<span class="bordereau__technique">Payment</span></h4>
+          <span class="bordereau__reseau">XRPL Mainnet <span>· fonds réels</span></span>
+        </div>
+        <dl class="champs">
+          <div class="large"><dt>Montant</dt><dd class="montant"><span data-montant="1250"></span><span class="montant__devise">XRP</span></dd></div>
+          <div class="large"><dt>Destinataire</dt><dd data-adresse="rKt4WzP9bC7hN3qMvX8sJd2FgE6yRa5uTo"></dd></div>
+          <div><dt>Tag de destination</dt><dd class="valeur">104 557</dd></div>
+          <div class="droite"><dt>Frais réseau</dt><dd class="valeur"><span data-montant="0.000012"></span> XRP</dd></div>
+          <div class="large"><dt>Depuis le compte</dt><dd data-adresse="rLp8x2Q4mVZsE3fJ9uKc6TyWb7HdRgA5Nn"></dd></div>
+        </dl>
+        <div class="rangee rangee--extremites">
+          <p class="empreinte">Empreinte<b>7F3A 91C2 0B6E</b></p>
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+        </div>
+        <p class="verifie">Identique à la transaction préparée sur ce poste à 10 h 35.</p>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="tiroir" id="tiroir-aide" aria-labelledby="tiroir-aide-titre">
+    <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-titre">Aide · Envoyer des fonds</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+    <div class="tiroir__corps">
+      <p>Le tag de destination identifie votre compte chez une plateforme d'échange. Sans lui, les fonds arrivent sur la plateforme mais ne sont pas crédités sur votre compte.</p>
+      <p>La réserve est une petite somme bloquée par le réseau tant que le compte existe. Elle n'est pas dépensable.</p>
+    </div>
+  </dialog>
+  <dialog class="tiroir" id="tiroir-reglages" aria-labelledby="tiroir-reglages-titre">
+    <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-reglages-titre">Réglages</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+    <div class="tiroir__corps">
+      <label class="rangee" for="specimen-euros"><input type="checkbox" id="specimen-euros"> Afficher l'équivalent en euros</label>
+      <p class="champ__aide">Interroge un service de prix externe, qui saura que cette application est utilisée depuis ce poste.</p>
+    </div>
+  </dialog>
+  <dialog class="tiroir" id="tiroir-technique" aria-labelledby="tiroir-technique-titre">
+    <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-technique-titre">Détails techniques</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+    <div class="tiroir__corps">
+      <p class="doux">Contenu exact du fichier.</p>
+      <pre>{
+  "TransactionType": "Payment",
+  "Account": "rLp8x2Q4mVZsE3fJ9uKc6TyWb7HdRgA5Nn",
+  "Destination": "rKt4WzP9bC7hN3qMvX8sJd2FgE6yRa5uTo",
+  "DestinationTag": 104557,
+  "Amount": "1250000000",
+  "Fee": "12"
+}</pre>
+    </div>
+  </dialog>
+</section>
+
+<!-- ===================================================================== -->
+<section id="privee" class="zone-privee specimen-zone" aria-labelledby="titre-privee">
+  <h2 id="titre-privee" class="specimen-titre">Zone privée · hors ligne</h2>
+
+  <div class="specimen-cadre">
+    <div class="bande">
+      <div class="bande__lieu"><span><b>Hors ligne</b> · Zone privée</span><span>Étape 3 · Signer</span></div>
+      <div class="bande__outils"><span>XRPL Mainnet · lu dans le fichier</span><button type="button" data-tiroir="tiroir-aide-privee">Aide</button></div>
+    </div>
+    <ol class="fil-etapes" aria-label="Fil d'étapes">
+      <li class="etape-privee">1 Créer</li>
+      <li class="etape-publique">2 Préparer</li>
+      <li class="etape-privee" aria-current="step">3 Signer</li>
+      <li class="etape-publique">4 Envoyer</li>
+    </ol>
+    <div class="gabarit">
+      <nav class="rail" aria-label="Progression">
+        <ul>
+          <li><button class="progression__etape est-fait" type="button">Charger</button></li>
+          <li><button class="progression__etape est-fait" type="button">Vérifier</button></li>
+          <li><button class="progression__etape" type="button" aria-current="step" disabled>Choisir la clé</button></li>
+          <li><button class="progression__etape" type="button" disabled>Signer</button></li>
+          <li><button class="progression__etape" type="button" disabled>Enregistrer</button></li>
+        </ul>
+        <p class="rail__etat">Aucun réseau détecté</p>
+      </nav>
+      <div class="action">
+        <div class="action__contenu">
+          <h3 class="titre-page">Avec quelle clé signer ?</h3>
+          <div class="choix" role="group" aria-label="Méthode">
+            <button type="button" aria-pressed="true">Fichier wallet</button>
+            <button type="button" aria-pressed="false">Mots</button>
+          </div>
+          <div class="depot depot--charge"><span class="depot__nom">xrpl_rLp8-A5Nn.xrplwallet</span><button class="bouton bouton--secondaire bouton--discret" type="button">Changer</button></div>
+          <div class="champ">
+            <label class="champ__libelle" for="specimen-mot-de-passe">Mot de passe du fichier</label>
+            <div class="saisie-groupe">
+              <input class="saisie" id="specimen-mot-de-passe" type="password" value="Lampe-Orage-Velours-1987!" autocomplete="off" spellcheck="false" autocapitalize="off">
+              <button class="bouton bouton--secondaire bouton--discret" type="button" data-basculer-secret="specimen-mot-de-passe">Afficher</button>
+            </div>
+          </div>
+          <p class="etat">Clé reconnue : clé principale du compte rLp8 … Nn.</p>
+          <div class="rangee rangee--fin"><button class="bouton" type="button">Continuer</button></div>
+        </div>
+      </div>
+      <aside class="contexte" aria-label="Ce que vous signez">
+        <p class="contexte__titre">Ce que vous signez</p>
+        <p class="petit doux">Paiement · XRPL Mainnet · fonds réels</p>
+        <p class="montant"><span data-montant="1250"></span><span class="montant__devise">XRP</span></p>
+        <p data-adresse="rKt4WzP9bC7hN3qMvX8sJd2FgE6yRa5uTo"></p>
+        <dl class="cles-valeurs"><dt>Tag</dt><dd>104 557</dd><dt>Frais</dt><dd><span data-montant="0.000012"></span> XRP</dd></dl>
+        <p class="empreinte">Empreinte<b>7F3A 91C2 0B6E</b></p>
+        <p class="petit doux secondaire">À envoyer avant 10 h 47 environ.</p>
+      </aside>
+    </div>
+  </div>
+
+  <div class="specimen-planches">
+    <div class="specimen-planche">
+      <h3>Bande d'alarme : réseau détecté</h3>
+      <div class="bande bande--alarme"><div class="bande__lieu"><span><b>Réseau détecté</b> · signature bloquée</span></div></div>
+      <p class="message message--attention"><b>Ce poste semble connecté à un réseau.</b> Débranchez le câble et coupez le Wi-Fi : la page se déverrouille d'elle-même.</p>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Boutons</h3>
+      <div class="rangee">
+        <button class="bouton bouton--maintenir" type="button" data-maintenir data-texte-confirme="Transaction signée" data-test="maintenir"><span class="bouton__libelle">Maintenir pour signer</span></button>
+      </div>
+      <div class="rangee">
+        <button class="bouton" type="button">Principal</button>
+        <button class="bouton bouton--secondaire" type="button">Secondaire</button>
+        <button class="bouton bouton--danger" type="button">Danger</button>
+      </div>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Robustesse du mot de passe</h3>
+      <div class="jauge" data-niveau="faible" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="jauge__texte">Trop faible : enregistrement bloqué.</p>
+      <div class="jauge" data-niveau="acceptable" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="jauge__texte">Acceptable. Un mot de plus le rendrait solide.</p>
+      <div class="jauge" data-niveau="solide" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="jauge__texte">Solide.</p>
+    </div>
+
+    <div class="specimen-planche">
+      <h3>Messages</h3>
+      <p class="message">Information : une phrase, sans couleur particulière.</p>
+      <p class="message message--attention"><b>Attention.</b> Longueur libre : ne se restaure qu'avec cette application.</p>
+      <p class="message message--danger"><b>Bloqué.</b> Type de transaction non reconnu.</p>
+      <p class="message message--reussite"><strong>Réussi.</strong> Transaction signée.</p>
+    </div>
+
+    <div class="specimen-planche specimen-planche--large">
+      <h3>Mots de la seed</h3>
+      <div class="choix" role="group" aria-label="Format" data-test="choix-format">
+        <button type="button" aria-pressed="true">24 mots</button>
+        <button type="button" aria-pressed="false">12 mots</button>
+        <button type="button" aria-pressed="false">Numéros secrets Xaman</button>
+      </div>
+      <ol class="mots">
+        <li><span class="mots__numero">1</span><span class="mots__mot">galaxy</span></li>
+        <li><span class="mots__numero">2</span><span class="mots__mot">orient</span></li>
+        <li><span class="mots__numero">3</span><span class="mots__mot">velvet</span></li>
+        <li><span class="mots__numero">4</span><span class="mots__mot">harbor</span></li>
+        <li><span class="mots__numero">5</span><span class="mots__mot">tiny</span></li>
+        <li><span class="mots__numero">6</span><span class="mots__mot">equal</span></li>
+        <li><span class="mots__numero">7</span><span class="mots__mot">ribbon</span></li>
+        <li><span class="mots__numero">8</span><span class="mots__mot">canyon</span></li>
+        <li><span class="mots__numero">9</span><span class="mots__mot">lizard</span></li>
+        <li><span class="mots__numero">10</span><span class="mots__mot">mention</span></li>
+        <li><span class="mots__numero">11</span><span class="mots__mot">frost</span></li>
+        <li><span class="mots__numero">12</span><span class="mots__mot">apology</span></li>
+        <li><span class="mots__numero">13</span><span class="mots__mot">sketch</span></li>
+        <li><span class="mots__numero">14</span><span class="mots__mot">dwarf</span></li>
+        <li><span class="mots__numero">15</span><span class="mots__mot">nominee</span></li>
+        <li><span class="mots__numero">16</span><span class="mots__mot">pulse</span></li>
+        <li><span class="mots__numero">17</span><span class="mots__mot">wagon</span></li>
+        <li><span class="mots__numero">18</span><span class="mots__mot">silent</span></li>
+        <li><span class="mots__numero">19</span><span class="mots__mot">basket</span></li>
+        <li><span class="mots__numero">20</span><span class="mots__mot">ivory</span></li>
+        <li><span class="mots__numero">21</span><span class="mots__mot">rescue</span></li>
+        <li><span class="mots__numero">22</span><span class="mots__mot">glimpse</span></li>
+        <li><span class="mots__numero">23</span><span class="mots__mot">timber</span></li>
+        <li><span class="mots__numero">24</span><span class="mots__mot">oyster</span></li>
+      </ol>
+      <p class="petit doux">Mots d'exemple : ne les utilisez jamais.</p>
+    </div>
+  </div>
+
+  <dialog class="tiroir" id="tiroir-aide-privee" aria-labelledby="tiroir-aide-privee-titre">
+    <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-privee-titre">Aide · Choisir la clé</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+    <div class="tiroir__corps">
+      <p>Fichier wallet avec son mot de passe, ou vos mots. La page indique quelle clé signera.</p>
+      <p>Rien n'est gardé après la signature : la page vide les champs.</p>
+    </div>
+  </dialog>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Politique de sécurité du contenu (F-10). En ligne : seulement les serveurs des réseaux (commun/connexion.js). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; connect-src wss://xrplcluster.com wss://s.altnet.rippletest.net:51233 https://horizon.stellar.org https://horizon-testnet.stellar.org">
+  <meta name="description" content="Étape 4 : vérifier puis envoyer sur le réseau une transaction signée hors ligne.">
+  <title>4 · Envoyer</title>
+  <link rel="stylesheet" href="../commun/commun.css">
+  <script src="../commun/securewalletbundle-2.5.4.js" defer></script>
+  <script src="../commun/format.js" defer></script>
+  <script src="../commun/fichiers.js" defer></script>
+  <script src="../commun/securite.js" defer></script>
+  <script src="../commun/reseau.js" defer></script>
+  <script src="../commun/connexion.js" defer></script>
+  <script src="../commun/historique.js" defer></script>
+  <script src="../commun/transactions.js" defer></script>
+  <script src="../commun/interface.js" defer></script>
+  <script src="../commun/bordereau.js" defer></script>
+  <script src="4-envoyer.js" defer></script>
+</head>
+<body class="zone-publique">
+
+<header>
+  <div class="bande">
+    <div class="bande__lieu"><span><b>En ligne</b> · Zone publique</span><span>Étape 4 · Envoyer</span></div>
+    <div class="bande__outils">
+      <span class="bande__reseau">Réseau <span class="bande__valeur est-attente" id="reseau-lu">lu dans le fichier</span></span>
+      <button type="button" data-tiroir="tiroir-aide">Aide</button>
+    </div>
+  </div>
+  <div class="bandeau-testnet" id="bandeau-testnet" hidden>Testnet · fonds fictifs, sans valeur</div>
+  <ol class="fil-etapes" aria-label="Fil d'étapes">
+    <li class="etape-privee">1 Créer</li>
+    <li class="etape-publique">2 Préparer</li>
+    <li class="etape-privee">3 Signer</li>
+    <li class="etape-publique" aria-current="step">4 Envoyer</li>
+  </ol>
+</header>
+
+<div class="gabarit">
+  <nav class="rail" aria-label="Progression">
+    <ul>
+      <li><button class="progression__etape" type="button" data-etape="0">Charger</button></li>
+      <li><button class="progression__etape" type="button" data-etape="1">Vérifier</button></li>
+      <li><button class="progression__etape" type="button" data-etape="2">Envoyer</button></li>
+      <li><button class="progression__etape" type="button" data-etape="3">Résultat</button></li>
+    </ul>
+  </nav>
+
+  <main class="action">
+    <div class="action__contenu">
+
+      <section class="pile" id="vue-charger" aria-labelledby="titre-charger">
+        <h1 class="titre-page" id="titre-charger">Chargez la transaction signée</h1>
+        <p class="doux">C'est le fichier signé à l'étape 3 sur le poste hors ligne, apporté par clé USB.</p>
+        <p class="message message--attention" id="hors-ligne" hidden><b>Ce poste semble hors ligne.</b> L'envoi demande une connexion au réseau.</p>
+        <div class="depot" id="depot">
+          <p>Déposez ici le fichier <code>.signee.json</code></p>
+          <label class="bouton bouton--secondaire" for="fichier">Parcourir…</label>
+          <input class="visuellement-cache" type="file" id="fichier" accept=".json,application/json">
+        </div>
+        <p class="champ__erreur" id="erreur-chargement" role="alert" hidden></p>
+        <details class="pile pile--serree">
+          <summary class="doux">Coller le contenu à la place</summary>
+          <label class="champ__libelle" for="contenu-colle">Contenu du fichier signé</label>
+          <textarea class="saisie saisie--donnees" id="contenu-colle" rows="5" spellcheck="false" autocomplete="off"></textarea>
+          <div class="rangee rangee--fin"><button class="bouton bouton--secondaire" type="button" id="utiliser-colle">Utiliser ce contenu</button></div>
+        </details>
+      </section>
+
+      <section class="pile" id="vue-verifier" aria-labelledby="titre-verifier" hidden>
+        <h1 class="titre-page" id="titre-verifier">Dernière vérification avant l'envoi</h1>
+        <p class="fichier">Fichier : <code id="fichier-nom"></code></p>
+        <div class="champ" id="choix-reseau" hidden>
+          <p class="message message--attention"><b>Sur quel réseau envoyer ?</b> Le fichier ne l'indique pas.</p>
+          <div class="choix" role="group" aria-label="Réseau d'envoi">
+            <button type="button" aria-pressed="false" data-valeur="main">XRPL Mainnet · fonds réels</button>
+            <button type="button" aria-pressed="false" data-valeur="test">XRPL Testnet · fonds fictifs</button>
+          </div>
+        </div>
+        <div id="bordereau"></div>
+        <div class="rangee rangee--extremites">
+          <p class="empreinte">Empreinte<b id="empreinte"></b></p>
+          <button class="lien" type="button" data-tiroir="tiroir-technique">Détails techniques</button>
+        </div>
+        <p id="correspondance" hidden></p>
+        <p class="message message--danger" id="message-verification" role="alert" hidden></p>
+        <p class="petit doux">Une fois validée par le réseau, une transaction ne peut plus être annulée.</p>
+        <div class="rangee rangee--fin">
+          <button class="bouton bouton--secondaire" type="button" id="pas-la-bonne">Ce n'est pas la bonne</button>
+          <button class="bouton" type="button" id="bouton-envoyer" disabled>Envoyer sur le réseau</button>
+        </div>
+      </section>
+
+      <section class="pile" id="vue-envoi" aria-labelledby="titre-envoi" hidden>
+        <h1 class="titre-page" id="titre-envoi">Envoi en cours</h1>
+        <p>Le réseau valide la transaction. Cela prend en général quelques secondes. Ne fermez pas la page.</p>
+      </section>
+
+      <section class="pile" id="vue-resultat" aria-labelledby="titre-resultat" hidden>
+        <h1 class="titre-page" id="titre-resultat"></h1>
+        <div class="pile pile--serree" id="resultat-details"></div>
+        <p><a class="lien" id="lien-explorateur" target="_blank" rel="noopener noreferrer" hidden>Voir la transaction sur un explorateur</a></p>
+        <div class="rangee rangee--fin"><button class="bouton bouton--secondaire" type="button" id="autre-transaction">Envoyer une autre transaction</button></div>
+      </section>
+
+    </div>
+  </main>
+
+  <aside class="contexte" aria-label="Transaction à envoyer">
+    <p class="contexte__titre" id="contexte-titre">Transaction à envoyer</p>
+    <p class="petit doux" id="contexte-vide">Aucune transaction chargée.</p>
+    <div class="pile pile--serree" id="contexte-recap" hidden>
+      <p class="petit doux" id="recap-type"></p>
+      <p class="montant" id="recap-montant" hidden></p>
+      <p id="recap-vers"></p>
+      <p class="empreinte">Empreinte<b id="recap-empreinte"></b></p>
+      <p class="petit" id="delai" hidden></p>
+    </div>
+  </aside>
+</div>
+
+<dialog class="tiroir" id="tiroir-aide" aria-labelledby="tiroir-aide-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-aide-titre">Aide</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps" id="tiroir-aide-corps"></div>
+</dialog>
+<dialog class="tiroir" id="tiroir-technique" aria-labelledby="tiroir-technique-titre">
+  <div class="tiroir__tete"><h2 class="tiroir__titre" id="tiroir-technique-titre">Détails techniques</h2><button class="bouton bouton--secondaire bouton--discret" type="button" data-fermer>Fermer</button></div>
+  <div class="tiroir__corps">
+    <p class="doux">Contenu décodé de la transaction signée.</p>
+    <pre id="technique-contenu"></pre>
+  </div>
+</dialog>
+
+</body>
+</html>

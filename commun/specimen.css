@@ -1,0 +1,11 @@
+/* Mise en page propre à la page de référence (specimen.html). Non utilisée par les 4 pages. */
+.specimen-entete { display: grid; gap: var(--e2); max-width: 980px; padding: var(--e6) var(--e5) var(--e5); }
+.specimen-entete nav { display: flex; flex-wrap: wrap; gap: var(--e3); }
+.specimen-zone { padding-bottom: 48px; border-top: 1px solid var(--filet); }
+.specimen-titre { padding: var(--e5); font-size: var(--t-page); }
+.specimen-cadre { margin: 0 var(--e5); overflow: hidden; border: 1px solid var(--bordure); border-radius: var(--rayon-carte); }
+.specimen-cadre .gabarit { min-height: 0; }
+.specimen-planches { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--e5); padding: var(--e5); }
+.specimen-planche { display: grid; gap: var(--e3); align-content: start; min-width: 0; padding: var(--e4); border: 1px solid var(--filet); border-radius: var(--rayon-carte); }
+.specimen-planche--large { grid-column: 1 / -1; }
+.specimen-planche > h3 { font-size: var(--t-petit); font-weight: 700; color: var(--doux); }

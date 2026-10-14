@@ -26,6 +26,12 @@
   page de référence `commun/specimen.html`, puis figé par captures d'écran.
 - **Simplicité.** Outillage minimal : Playwright (développement seulement) et
   `node --test`, intégré à Node.
+- **Aucune injection possible.** Le code n'écrit que du texte (`textContent`) :
+  ni `innerHTML`, ni `.html()`, ni `eval`, ni script, gestionnaire ou style
+  écrits dans le HTML. Les champs secrets désactivent correcteur orthographique,
+  autocomplétion et majuscules automatiques. Vérifié par
+  `tests/unitaire/injection.test.js` ; les anciens fichiers y sont des
+  exceptions temporaires, retirées à la migration de chaque page.
 
 ## 2. Historique cible sur `main`
 
@@ -121,6 +127,9 @@ Bootstrap et jQuery.
 - **Sécurité dans l'interface** : vérification avant signature, types inconnus
   refusés sans dérogation, export en clair supprimé, pas de bouton Copier sur
   les secrets, liste des signataires embarquée dans le fichier de l'étape 2.
+- **Empreinte** : la même aux étapes 2, 3 et 4, y compris quand un signataire
+  XRPL signe et que les frais doublent : elle se calcule sans les champs de
+  signature et sur les frais de base (frais ÷ (1 + nombre de signataires)).
 - **CSS** : `commun/commun.css` lié par les 4 pages, aucun `style=""`.
 
 ## 5. Hors périmètre de cette branche

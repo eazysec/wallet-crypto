@@ -1,9 +1,11 @@
 // @ts-check
 // Page 4 · invariants : récapitulatif avant envoi et transaction réellement envoyée.
+const fs = require('node:fs');
 const { test, expect } = require('@playwright/test');
 const { PiloteEnvoyer } = require('./pilotes/envoyer');
 const { nouvelEtat } = require('./reseau');
-const { ADRESSES: A } = require('../donnees/vecteurs');
+const { ADRESSES: A, CLES } = require('../donnees/vecteurs');
+const { donnee } = require('./outils');
 const ATTENDU = require('../donnees/attendus');
 
 // Les transactions signées de référence expirent au registre 2000 (LastLedgerSequence).
@@ -56,13 +58,13 @@ test.describe('Page 4 · envoi', () => {
     expect((await p.envoyer()).reussi).toBe(false);
   });
 
-  // Bug de la version actuelle : la page annonce « Transaction réussie » et le code reste vide,
-  // car le script écrit dans un <b> absent (le HTML contient un <strong>).
-  // Quand la refonte l'aura corrigé, ce test passera : retirer alors test.fail.
-  test('XRPL · le code de résultat du réseau est affiché', async ({ page }) => {
-    test.fail(true, 'Bug existant : code tec non affiché, transaction annoncée comme réussie');
+  // Correction de T-01 : l'ancienne version annonçait « Transaction réussie » avec un code vide.
+  test('XRPL · un rejet du réseau est présenté comme un refus, raison et code affichés', async ({ page }) => {
     const { p } = await ouvrirAvec(page, ATTENDU.xrplClePrincipale, 'XRPL', { registre: AVANT_EXPIRATION, resultat: 'tecUNFUNDED_PAYMENT' });
-    expect((await p.envoyer()).detail).toContain('tecUNFUNDED_PAYMENT');
+    const resultat = await p.envoyer();
+    expect(resultat.reussi).toBe(false);
+    expect(resultat.detail).toContain('Fonds insuffisants');
+    expect(resultat.detail).toContain('tecUNFUNDED_PAYMENT');
   });
 
   test('XLM · accepté : la transaction envoyée est celle qui a été signée', async ({ page }) => {
@@ -76,5 +78,102 @@ test.describe('Page 4 · envoi', () => {
     const resultat = await p.envoyer();
     expect(resultat.reussi).toBe(false);
     expect(resultat.detail).toContain('tx_too_late');
+  });
+});
+
+test.describe('Page 4 · nouvelle interface', () => {
+  // Correction de T-04 : l'ancienne version envoyait vers le mainnet par défaut.
+  test('XRPL · le réseau n\'est jamais choisi par défaut', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat({ registre: AVANT_EXPIRATION }));
+    await p.ouvrir();
+    await p.chargerContenu(JSON.stringify(ATTENDU.xrplClePrincipale), 'transaction.signee.json');
+    expect(await p.demandeReseau()).toBe(true);
+    expect(await p.envoiPossible()).toBe(false);
+    await p.choisirReseau('test');
+    expect(await p.envoiPossible()).toBe(true);
+    expect(await p.reseauAffiche()).toContain('XRPL Testnet');
+  });
+
+  test('Stellar · le réseau est lu dans le fichier, le testnet est signalé', async ({ page }) => {
+    const { p } = await ouvrirAvec(page, ATTENDU.xlmSimple, 'XLM');
+    expect(await p.demandeReseau()).toBe(false);
+    expect(await p.reseauAffiche()).toContain('Stellar Testnet');
+    expect(await p.bandeauTestnet()).toBe(true);
+  });
+
+  test('une transaction non signée est refusée, avec la marche à suivre', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat());
+    await p.ouvrir();
+    await p.chargerContenu(fs.readFileSync(donnee('transactions/xrpl-paiement.tosign.json'), 'utf8'), 'transaction.a-signer.json');
+    expect(await p.erreurChargement()).toContain('pas signée');
+  });
+
+  test('un fichier qui n\'est pas une transaction est refusé', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat());
+    await p.ouvrir();
+    await p.chargerContenu(fs.readFileSync(donnee('wallets/xrpl-abandon12.xrplwallet'), 'utf8'), 'xrpl-abandon12.xrplwallet');
+    expect(await p.erreurChargement()).toContain('pas une transaction');
+  });
+
+  test('le délai de validité est affiché', async ({ page }) => {
+    const { p } = await ouvrirAvec(page, ATTENDU.xlmSimple, 'XLM');
+    expect(await p.delaiAffiche()).toMatch(/^Valable encore \d/);
+  });
+
+  test('XRPL · le délai, estimé d\'après les registres, est donné en minutes avec « environ »', async ({ page }) => {
+    const { p } = await ouvrirAvec(page, ATTENDU.xrplClePrincipale, 'XRPL', { registre: 1800 });
+    expect(await p.delaiAffiche()).toBe('Valable encore environ 13 min');
+  });
+
+  test('XRPL · délai dépassé : l\'envoi est bloqué avant de partir, avec l\'explication', async ({ page }) => {
+    const { p, etat } = await ouvrirAvec(page, ATTENDU.xrplClePrincipale, 'XRPL', { registre: APRES_EXPIRATION });
+    expect(await p.envoiPossible()).toBe(false);
+    expect(await p.messageVerification()).toContain('délai de validité est dépassé');
+    expect(etat.xrpl.soumises).toEqual([]);
+  });
+
+  // Correction de T-05 : l'ancienne version insérait le mémo en HTML.
+  test('un mémo piégé s\'affiche comme du texte et n\'est jamais exécuté', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat());
+    await p.ouvrir();
+    const piege = '<img src=x onerror=top.p=1>';
+    const signee = await page.evaluate(({ secret, destination, memo }) => {
+      const { StellarSdk } = SecureWalletBundle;
+      const paire = StellarSdk.Keypair.fromSecret(secret);
+      const compte = new StellarSdk.Account(paire.publicKey(), '1');
+      const tx = new StellarSdk.TransactionBuilder(compte, { fee: '100', networkPassphrase: StellarSdk.Networks.TESTNET, timebounds: { minTime: 0, maxTime: 1893456000 } })
+        .addOperation(StellarSdk.Operation.payment({ destination, asset: StellarSdk.Asset.native(), amount: '1' }))
+        .addMemo(StellarSdk.Memo.text(memo))
+        .build();
+      tx.sign(paire);
+      return { XDR: tx.toXDR(), Network: StellarSdk.Networks.TESTNET };
+    }, { secret: CLES.xlmSep5test1, destination: A.xlmSep5test3, memo: piege });
+    await p.chargerTransactionSignee(signee, 'XLM');
+    expect((await p.lireRecapitulatif()).tag).toBe(piege);
+    expect(await page.evaluate(() => window.p)).toBeUndefined();
+  });
+
+  test('une transaction à plusieurs opérations est refusée : rien ne doit rester caché', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat());
+    await p.ouvrir();
+    const signee = await page.evaluate(({ secret, destination }) => {
+      const { StellarSdk } = SecureWalletBundle;
+      const paire = StellarSdk.Keypair.fromSecret(secret);
+      const compte = new StellarSdk.Account(paire.publicKey(), '1');
+      const tx = new StellarSdk.TransactionBuilder(compte, { fee: '200', networkPassphrase: StellarSdk.Networks.TESTNET, timebounds: { minTime: 0, maxTime: 1893456000 } })
+        .addOperation(StellarSdk.Operation.payment({ destination, asset: StellarSdk.Asset.native(), amount: '1' }))
+        .addOperation(StellarSdk.Operation.payment({ destination, asset: StellarSdk.Asset.native(), amount: '900' }))
+        .build();
+      tx.sign(paire);
+      return { XDR: tx.toXDR(), Network: StellarSdk.Networks.TESTNET };
+    }, { secret: CLES.xlmSep5test1, destination: A.xlmSep5test3 });
+    await p.chargerContenu(JSON.stringify(signee), 'transaction.signee.json');
+    expect(await p.erreurChargement()).toContain('ne sait pas traduire');
+  });
+
+  test('aucune requête ne sort vers internet', async ({ page }) => {
+    const { p, etat } = await ouvrirAvec(page, ATTENDU.xlmSimple, 'XLM');
+    await p.envoyer();
+    expect(etat.bloquees).toEqual([]);
   });
 });
