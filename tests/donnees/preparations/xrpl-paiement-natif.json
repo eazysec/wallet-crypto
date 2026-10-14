@@ -1,0 +1,11 @@
+{
+   "TransactionType": "Payment",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "Destination": "rKxpJQ6hLWYbo7p1oo7WHjrcrRFv1TUQeC",
+   "Amount": "10000000",
+   "DestinationTag": 104557,
+   "Flags": 0,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}

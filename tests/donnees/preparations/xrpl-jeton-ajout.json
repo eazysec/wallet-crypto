@@ -1,0 +1,13 @@
+{
+   "TransactionType": "TrustSet",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "LimitAmount": {
+      "currency": "USD",
+      "issuer": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+      "value": "10000"
+   },
+   "Flags": 0,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}

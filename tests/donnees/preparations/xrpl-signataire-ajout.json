@@ -1,0 +1,17 @@
+{
+   "TransactionType": "SignerListSet",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "SignerQuorum": 1,
+   "SignerEntries": [
+      {
+         "SignerEntry": {
+            "Account": "rKxpJQ6hLWYbo7p1oo7WHjrcrRFv1TUQeC",
+            "SignerWeight": 1
+         }
+      }
+   ],
+   "Flags": 0,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}

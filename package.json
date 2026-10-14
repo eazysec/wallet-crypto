@@ -1,0 +1,12 @@
+{
+  "name": "securedwallet",
+  "private": true,
+  "description": "Outillage de développement et tests de SecuredWallet. Rien de ce qui est ici n'est livré avec l'application.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:unitaire": "node --test tests/unitaire/"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

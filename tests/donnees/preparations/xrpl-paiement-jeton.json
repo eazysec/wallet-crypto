@@ -1,0 +1,14 @@
+{
+   "TransactionType": "Payment",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "Destination": "rKxpJQ6hLWYbo7p1oo7WHjrcrRFv1TUQeC",
+   "Amount": {
+      "currency": "USD",
+      "value": "25",
+      "issuer": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+   },
+   "Flags": 131072,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}

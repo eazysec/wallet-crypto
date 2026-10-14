@@ -1,0 +1,9 @@
+{
+   "TransactionType": "AccountSet",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "ClearFlag": 4,
+   "Flags": 0,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}

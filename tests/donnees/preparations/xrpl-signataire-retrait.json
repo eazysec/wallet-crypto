@@ -1,0 +1,9 @@
+{
+   "TransactionType": "SignerListSet",
+   "Account": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3",
+   "SignerQuorum": 0,
+   "Flags": 0,
+   "Sequence": 81204812,
+   "Fee": "12",
+   "LastLedgerSequence": 90000200
+}
