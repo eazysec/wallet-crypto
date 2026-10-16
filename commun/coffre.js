@@ -1,8 +1,7 @@
-// Fichiers wallet : lecture et chiffrement, au format de la version actuelle.
-// ATTENTION : ce format reprend tel quel le chiffrement existant, qui est faible
-// (clé = SHA-256 du mot de passe, sans sel ni dérivation ; AES-CBC sans authentification :
-// constats F-01 et F-02). Sa correction (P0-1) est prévue hors de la refonte de l'interface ;
-// elle ne touchera que ce fichier.
+// Fichiers wallet : chiffrement et lecture.
+// Format securedwallet/wallet-v2 (P0-1) : clé dérivée du mot de passe par PBKDF2-HMAC-SHA-256
+// (sel aléatoire, nombre d'itérations écrit dans le fichier), contenu chiffré en AES-256-GCM,
+// en-tête authentifié. Les anciens fichiers (SHA-256 + AES-CBC, ou en clair) ne sont plus lus.
 // Script classique : window.Commun.Coffre dans les pages, require() dans les tests Node.
 (function (exporter) {
   'use strict';
@@ -14,45 +13,89 @@
     }
   }
 
+  const FORMAT = 'securedwallet/wallet-v2';
+  const KDF = 'PBKDF2-SHA-256';
+  const CHIFFREMENT = 'AES-256-GCM';
+  const ITERATIONS = 1000000;
+  // Bornes acceptées à la lecture : en dessous, trop faible ; au-dessus, la page resterait figée.
+  const ITERATIONS_MIN = 600000;
+  const ITERATIONS_MAX = 10000000;
+  const TAILLE_SEL = 16;
+  const TAILLE_IV = 12;
+  const TAILLE_ETIQUETTE = 16;
+
   const subtil = () => globalThis.crypto.subtle;
-  const hexa = (octets) => Array.from(octets, (o) => o.toString(16).padStart(2, '0')).join('');
+  const aleatoire = (taille) => globalThis.crypto.getRandomValues(new Uint8Array(taille));
+  const versBase64 = (octets) => btoa(String.fromCharCode(...octets));
 
-  async function cle(motDePasse, usage) {
-    const empreinte = await subtil().digest('SHA-256', new TextEncoder().encode(motDePasse));
-    return subtil().importKey('raw', empreinte, { name: 'AES-CBC' }, false, [usage]);
+  /** Base64 strict : rejette tout autre texte. */
+  function depuisBase64(texte) {
+    if (typeof texte !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(texte)) throw new ErreurMotDePasse();
+    return Uint8Array.from(atob(texte), (c) => c.charCodeAt(0));
   }
 
-  /** Un fichier en clair est du JSON ; un fichier chiffré ne l'est pas. */
-  function estChiffre(texte) {
-    try {
-      JSON.parse(texte);
-      return false;
-    } catch {
-      return true;
-    }
+  /** En-tête dans un ordre fixe : c'est aussi la donnée authentifiée par AES-GCM. */
+  function entete(iterations, sel, iv) {
+    return {
+      format: FORMAT,
+      kdf: { nom: KDF, iterations, sel: versBase64(sel) },
+      chiffrement: { nom: CHIFFREMENT, iv: versBase64(iv) },
+    };
   }
 
-  /** Format : 32 caractères hexadécimaux (vecteur d'initialisation) puis le chiffré en base64. */
+  async function cle(motDePasse, sel, iterations, usage) {
+    const base = await subtil().importKey('raw', new TextEncoder().encode(motDePasse), 'PBKDF2', false, ['deriveKey']);
+    return subtil().deriveKey(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: sel, iterations },
+      base,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      [usage],
+    );
+  }
+
   async function chiffrerWallet(wallet, motDePasse) {
-    const vecteur = globalThis.crypto.getRandomValues(new Uint8Array(16));
-    const chiffre = await subtil().encrypt({ name: 'AES-CBC', iv: vecteur }, await cle(motDePasse, 'encrypt'), new TextEncoder().encode(JSON.stringify(wallet)));
-    return hexa(vecteur) + btoa(String.fromCharCode(...new Uint8Array(chiffre)));
+    const sel = aleatoire(TAILLE_SEL);
+    const iv = aleatoire(TAILLE_IV);
+    const tete = entete(ITERATIONS, sel, iv);
+    const chiffre = await subtil().encrypt(
+      { name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(JSON.stringify(tete)) },
+      await cle(motDePasse, sel, ITERATIONS, 'encrypt'),
+      new TextEncoder().encode(JSON.stringify(wallet)),
+    );
+    return JSON.stringify({ ...tete, chiffre: versBase64(new Uint8Array(chiffre)) });
   }
 
-  /** Renvoie { wallet, chiffre }. Rejette avec ErreurMotDePasse si le déchiffrement échoue. */
+  /** Lit l'en-tête ; tout écart au format est refusé avant le moindre calcul. */
+  function lireEntete(texte) {
+    const fichier = JSON.parse(texte);
+    const { kdf, chiffrement } = fichier || {};
+    if (fichier?.format !== FORMAT || kdf?.nom !== KDF || chiffrement?.nom !== CHIFFREMENT) throw new ErreurMotDePasse();
+    const { iterations } = kdf;
+    if (!Number.isInteger(iterations) || iterations < ITERATIONS_MIN || iterations > ITERATIONS_MAX) throw new ErreurMotDePasse();
+    const sel = depuisBase64(kdf.sel);
+    const iv = depuisBase64(chiffrement.iv);
+    const chiffre = depuisBase64(fichier.chiffre);
+    if (sel.length !== TAILLE_SEL || iv.length !== TAILLE_IV || chiffre.length <= TAILLE_ETIQUETTE) throw new ErreurMotDePasse();
+    return { iterations, sel, iv, chiffre };
+  }
+
+  /** Renvoie { wallet }. Rejette avec ErreurMotDePasse si le fichier est illisible ou le mot de passe faux. */
   async function lireFichierWallet(texte, motDePasse) {
-    if (!estChiffre(texte)) return { wallet: JSON.parse(texte), chiffre: false };
     try {
-      const vecteur = new Uint8Array(texte.slice(0, 32).match(/.{2}/g).map((o) => parseInt(o, 16)));
-      const octets = Uint8Array.from(atob(texte.slice(32)), (c) => c.charCodeAt(0));
-      const clair = await subtil().decrypt({ name: 'AES-CBC', iv: vecteur }, await cle(motDePasse, 'decrypt'), octets);
-      return { wallet: JSON.parse(new TextDecoder().decode(clair)), chiffre: true };
+      const { iterations, sel, iv, chiffre } = lireEntete(texte);
+      const clair = await subtil().decrypt(
+        { name: 'AES-GCM', iv, additionalData: new TextEncoder().encode(JSON.stringify(entete(iterations, sel, iv))) },
+        await cle(motDePasse, sel, iterations, 'decrypt'),
+        chiffre,
+      );
+      return { wallet: JSON.parse(new TextDecoder().decode(clair)) };
     } catch {
       throw new ErreurMotDePasse();
     }
   }
 
-  exporter('Coffre', { ErreurMotDePasse, estChiffre, chiffrerWallet, lireFichierWallet });
+  exporter('Coffre', { ErreurMotDePasse, chiffrerWallet, lireFichierWallet });
 })(function (nom, api) {
   if (typeof module === 'object' && module.exports) module.exports = api;
   else (window.Commun = window.Commun || {})[nom] = api;

@@ -102,8 +102,19 @@
     };
   }
 
+  // ---------- Fichiers wallet ----------
+
+  /** Format écrit par commun/coffre.js (qui a sa propre copie de cette constante, vérifiée par les tests). */
+  const FORMAT_WALLET = 'securedwallet/wallet-v2';
+
+  /** Wallet chiffré, ou wallet en clair d'une ancienne version : à ne jamais prendre pour une transaction. */
+  function estFichierWallet(objet) {
+    if (!objet || typeof objet !== 'object') return false;
+    return objet.format === FORMAT_WALLET || Boolean(objet.privateKey || objet.seed || objet.seedHex);
+  }
+
   exporter('Fichiers', {
-    OPERATIONS, FORMAT_TRANSACTION, nomFichierTransaction, nomFichierWallet, nomFichierAdressePublique,
+    OPERATIONS, FORMAT_TRANSACTION, FORMAT_WALLET, estFichierWallet, nomFichierTransaction, nomFichierWallet, nomFichierAdressePublique,
     envelopperTransaction, identifierTransaction,
   });
 })(function (nom, api) {

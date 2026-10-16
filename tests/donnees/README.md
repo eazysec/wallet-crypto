@@ -6,8 +6,10 @@ vrais fonds.
 - `vecteurs.js` : mots de test et adresses attendues.
   - Stellar : vecteurs officiels SEP-0005, référence indépendante du code.
   - XRPL : valeurs relevées sur la version actuelle (caractérisation).
-- `wallets/` : fichiers wallet chiffrés (mot de passe `mot-de-passe-de-test`)
-  produits par la version actuelle de la page 1.
+- `wallets/` : fichiers wallet chiffrés au format actuel (mot de passe
+  `mot-de-passe-de-test`), recréés par `tests/outils/generer-wallets.js`.
+- `wallets-ancien-format/` : les mêmes wallets, tels que les chiffrait l'ancienne
+  version (SHA-256 + AES-CBC) ; servent à vérifier qu'ils sont refusés.
 - `transactions/` : transactions à signer, au format produit par l'étape 2.
 - `attendus.js` : transactions signées attendues (signatures déterministes).
 - `preparations/` : transactions préparées par la page 2 pour chaque type et

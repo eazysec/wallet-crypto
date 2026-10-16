@@ -111,8 +111,15 @@ test.describe('Page 4 · nouvelle interface', () => {
   test('un fichier qui n\'est pas une transaction est refusé', async ({ page }) => {
     const p = new PiloteEnvoyer(page, nouvelEtat());
     await p.ouvrir();
-    await p.chargerContenu(fs.readFileSync(donnee('wallets/xrpl-abandon12.xrplwallet'), 'utf8'), 'xrpl-abandon12.xrplwallet');
+    await p.chargerContenu('{"bonjour":1}', 'autre.json');
     expect(await p.erreurChargement()).toContain('pas une transaction');
+  });
+
+  test('un fichier wallet chiffré est reconnu, avec la mise en garde', async ({ page }) => {
+    const p = new PiloteEnvoyer(page, nouvelEtat());
+    await p.ouvrir();
+    await p.chargerContenu(fs.readFileSync(donnee('wallets/xrpl-abandon12.xrplwallet'), 'utf8'), 'xrpl-abandon12.xrplwallet');
+    expect(await p.erreurChargement()).toContain('Ce fichier est un wallet');
   });
 
   test('le délai de validité est affiché', async ({ page }) => {

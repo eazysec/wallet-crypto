@@ -95,7 +95,7 @@
       afficherErreur("Ce fichier n'est pas une transaction : son contenu n'est pas lisible.");
       return;
     }
-    if (objet && (objet.privateKey || objet.seed)) {
+    if (Fichiers.estFichierWallet(objet)) {
       afficherErreur("Ce fichier est un wallet : il contient une clé privée. Ne l'ouvrez jamais sur un poste en ligne.");
       return;
     }

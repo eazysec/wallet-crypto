@@ -435,7 +435,7 @@
     Object.assign(etat, {
       mots: contenu.seed, wallet, xaman: /^[0-9 ]+$/.test(contenu.seed),
       nonStandard: !Cles.verifierMots(contenu.seed).standard,
-      enClair: !lu.chiffre, source: `Wallet retrouvé à partir du fichier ${nom}`,
+      source: `Wallet retrouvé à partir du fichier ${nom}`,
     });
     oublierWallet();
     afficherFichier();
@@ -452,7 +452,6 @@
 
   function afficherFichier() {
     montrerAdresse(etat.wallet.classicAddress);
-    parId('note-en-clair').hidden = !etat.enClair;
     parId('note-non-standard').hidden = !(etat.parcours === 'restaurer' && etat.nonStandard);
     parId('nom-wallet').textContent = Fichiers.nomFichierWallet(etat.chaine, etat.wallet.classicAddress);
     viderMotsDePasse();

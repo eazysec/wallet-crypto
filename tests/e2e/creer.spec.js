@@ -82,7 +82,8 @@ test.describe('Page 1 · fichier wallet chiffré', () => {
       await p.ouvrir(chaine);
       await p.restaurerDepuisMots(mots);
       const fichier = await p.enregistrerFichier(V.MOT_DE_PASSE);
-      expect(() => JSON.parse(fichier.contenu), 'le fichier ne doit pas être en clair').toThrow();
+      expect(JSON.parse(fichier.contenu).format, 'le fichier doit être chiffré au format v2').toBe('securedwallet/wallet-v2');
+      expect(fichier.contenu).not.toContain(mots.split(' ')[0] + ' ');
 
       // Chemin sans accents : le dépôt de fichier échoue si le chemin en contient
       // (le dossier de résultats reprend le titre du test, « même », « · »).
@@ -215,7 +216,7 @@ test.describe('Page 1 · nouvelle interface · créer', () => {
     await p.restaurerDepuisMots(V.MOTS.abandon12);
     const fichier = await p.enregistrerFichier(SOLIDE);
     expect(fichier.nom).toBe('xrpl_rHsM-N5v3.xrplwallet');
-    expect(() => JSON.parse(fichier.contenu)).toThrow();
+    expect(JSON.parse(fichier.contenu).format).toBe('securedwallet/wallet-v2');
     expect(await p.bilan()).toEqual(['Wallet retrouvé à partir de vos mots', 'Fichier chiffré enregistré : xrpl_rHsM-N5v3.xrplwallet']);
 
     const posteHorsLigne = await browser.newContext();
@@ -308,13 +309,15 @@ test.describe('Page 1 · nouvelle interface · restaurer et poste', () => {
     expect(await p.erreurRestauration()).toContain('wallet Stellar');
   });
 
-  test('ancien fichier wallet en clair : lu, avec le conseil d\'en enregistrer une version chiffrée', async ({ page }) => {
+  test('ancien fichier wallet, en clair ou à l\'ancien chiffrement : refusé', async ({ page }) => {
     const p = new PiloteCreer(page);
     await p.ouvrir('XRPL');
     const clair = JSON.stringify({ classicAddress: A.xrplAbandon12, seed: V.MOTS.abandon12 });
-    expect(await p.restaurerDepuisFichier(fichierTemporaire('ancien.xrplwallet', clair), '')).toBe(true);
-    expect((await p.lire()).adresse).toBe(A.xrplAbandon12);
-    await expect(page.locator('#note-en-clair')).toBeVisible();
+    expect(await p.restaurerDepuisFichier(fichierTemporaire('ancien.xrplwallet', clair), '')).toBe(false);
+    expect(await p.erreurRestauration()).toContain('Mot de passe incorrect, ou fichier abîmé');
+    await p.ouvrir('XRPL');
+    expect(await p.restaurerDepuisFichier(donnee('wallets-ancien-format/xrpl-abandon12.xrplwallet'), V.MOT_DE_PASSE)).toBe(false);
+    expect(await p.erreurRestauration()).toContain('Mot de passe incorrect, ou fichier abîmé');
   });
 
   test('mauvais mot de passe : le fichier reste choisi, seul le mot de passe est effacé', async ({ page }) => {

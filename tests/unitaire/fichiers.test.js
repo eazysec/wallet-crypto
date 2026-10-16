@@ -97,3 +97,14 @@ test('nomFichierTransaction : réseau inconnu (ancien format XRPL), le nom l\'om
     details: ['10', 'XRP'], empreinte: 'e1c6dd', etape: 'signee',
   }), 'xrpl_2026-10-14_paiement-10-xrp_e1c6dd.signee.json');
 });
+
+test('estFichierWallet reconnaît un wallet chiffré, ou un wallet en clair', async () => {
+  const Coffre = require('../../commun/coffre');
+  assert.equal(F.FORMAT_WALLET, 'securedwallet/wallet-v2');
+  assert.equal(F.estFichierWallet(JSON.parse(await Coffre.chiffrerWallet({ seed: 'mots' }, 'mdp'))), true);
+  assert.equal(F.estFichierWallet({ classicAddress: XRPL, privateKey: '00AB', seed: 'mots' }), true);
+  assert.equal(F.estFichierWallet({ seedHex: 'AB' }), true);
+  for (const autre of [null, 'texte', {}, { TransactionType: 'Payment' }, F.envelopperTransaction({ chaine: 'XRPL', reseau: 'test', etape: 'a-signer', transaction: { TransactionType: 'Payment' } })]) {
+    assert.equal(F.estFichierWallet(autre), false);
+  }
+});

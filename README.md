@@ -64,14 +64,18 @@ transaction : la même aux étapes 2, 3 et 4.
   ligne, et limite les pages en ligne aux serveurs des réseaux.
 - Aucun contenu de fichier n'est interprété comme du HTML (test automatique).
 - Le fichier wallet est toujours chiffré ; un mot de passe trop faible est refusé.
+  Clé dérivée du mot de passe par PBKDF2-HMAC-SHA-256 (1 000 000 d'itérations,
+  sel aléatoire), chiffrement authentifié AES-256-GCM : un fichier modifié est
+  refusé. Les fichiers wallet des versions antérieures ne sont plus lus ;
+  restaurez ces wallets à partir de leurs mots.
 
 **Limites connues** (détail dans [docs/audit/findings.md](docs/audit/findings.md)
 et [docs/refonte-ui/constats-tests.md](docs/refonte-ui/constats-tests.md))
 
-- **Chiffrement du fichier wallet faible (F-01)** : la clé est un simple SHA-256
-  du mot de passe, sans sel ni dérivation coûteuse. Un fichier volé peut être
-  attaqué par force brute. Gardez-le comme un secret ; vos mots restent la vraie
-  sauvegarde. Correction prévue (P0-1).
+- **Fichier wallet volé** : il ne résiste qu'autant que son mot de passe.
+  PBKDF2 ralentit chaque essai mais, contrairement à Argon2id (envisagé avec
+  P2-2), ne gêne pas les cartes graphiques. Gardez le fichier comme un secret ;
+  vos mots restent la vraie sauvegarde.
 - **Effacement en mémoire non garanti (F-03)** : « Terminer et effacer l'écran »
   vide l'écran et les variables de la page, pas la mémoire du navigateur.
   Fermez le navigateur après usage.

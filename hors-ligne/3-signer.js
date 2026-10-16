@@ -148,7 +148,7 @@
       refuser("Ce fichier n'est pas une transaction. S'il s'agit de votre fichier wallet, chargez-le à l'étape « Choisir la clé ».");
       return;
     }
-    if (objet && (objet.privateKey || objet.seedHex)) {
+    if (Fichiers.estFichierWallet(objet)) {
       refuser("Ce fichier est un wallet : chargez-le à l'étape « Choisir la clé ».");
       return;
     }
