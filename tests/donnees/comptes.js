@@ -13,10 +13,12 @@ const xlmJetons = [
   { code: 'EUR', emetteur: A.xlmEmetteur, solde: '0.0000000' },
 ];
 
-function xrpl(compte) {
+// Émetteur des jetons ; transferRate : frais de transfert (1005000000 = 0,5 %), absent = sans frais.
+function xrpl(compte, emetteur = {}) {
   return {
     [A.xrplAbandon12]: { solde: '1741300000', sequence: 81204812, objets: 2, jetons: xrplJetons, signataires: [], ...compte },
     [A.xrplAbandon24]: xrplDestination,
+    [A.xrplEmetteur]: { solde: '100000000', sequence: 1, ...emetteur },
   };
 }
 
@@ -33,6 +35,7 @@ module.exports = {
     sansJeton: xrpl({ objets: 0, jetons: [] }),
     avecSignataire: xrpl({ signataires: [A.xrplAbandon24] }),
     principaleDesactivee: xrpl({ signataires: [A.xrplAbandon24], desactiverPrincipale: true }),
+    emetteurAvecFrais: xrpl({}, { transferRate: 1005000000 }),
   },
   xlm: {
     standard: xlm({}),

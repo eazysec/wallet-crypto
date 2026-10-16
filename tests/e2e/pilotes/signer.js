@@ -66,6 +66,7 @@ class PiloteSigner {
       tag: await texte('tag'),
       montant: await texte('montant', 'dd span:first-child'),
       devise: await texte('montant', '.montant__devise'),
+      debit: (await texte('debit'))?.replace(/\s+/g, ' '),
     };
   }
 

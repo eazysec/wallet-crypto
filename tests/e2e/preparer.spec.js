@@ -117,6 +117,50 @@ test.describe('Page 2 · nouvelle interface', () => {
     expect(await p.montantMax()).toBe('1739.899988');
   });
 
+  // F-12 : paiement de jeton XRPL quand l'émetteur prend des frais de transfert.
+  test.describe('F-12 · frais de l\'émetteur', () => {
+    const USD = (value) => ({ currency: 'USD', issuer: A.xrplEmetteur, value });
+
+    test('émetteur sans frais : ni livraison partielle ni plafond de débit, pas de ligne « Vous paierez »', async ({ page }) => {
+      const { p } = await ouvrirXrpl(page);
+      await p.preparerEnvoi({ actif: 'USD', vers: A.xrplAbandon24, montant: '25' });
+      expect(await p.champBordereau('debit')).toBeNull();
+      const tx = await p.exporter();
+      expect(tx.Flags || 0).toBe(0);
+      expect(tx.SendMax).toBeUndefined();
+      expect(tx.Amount).toEqual(USD('25'));
+    });
+
+    test('émetteur à 0,5 % : plafond de débit = montant + frais, affiché avant l\'export', async ({ page }) => {
+      const { p } = await ouvrirXrpl(page, C.xrpl.emetteurAvecFrais);
+      await p.preparerEnvoi({ actif: 'USD', vers: A.xrplAbandon24, montant: '25' });
+      expect(await p.champBordereau('debit')).toBe('25,125 USD, dont 0,125 USD de frais de l\'émetteur');
+      const tx = await p.exporter();
+      expect(tx.Flags || 0).toBe(0);
+      expect(tx.Amount).toEqual(USD('25'));
+      expect(tx.SendMax).toEqual(USD('25.125'));
+    });
+
+    test('émetteur à 0,5 % : le disponible annonce les frais, « Max » les déduit', async ({ page }) => {
+      const { p } = await ouvrirXrpl(page, C.xrpl.emetteurAvecFrais);
+      expect(await p.montantMax('USD')).toBe('248.756218');
+      await expect(page.locator('#envoi-disponible')).toContainText("Frais de l'émetteur : 0,5 %");
+    });
+
+    test('émetteur à 0,5 % : montant + frais au-delà du solde refusé', async ({ page }) => {
+      const { p } = await ouvrirXrpl(page, C.xrpl.emetteurAvecFrais);
+      expect(await p.essayerEnvoyer({ actif: 'USD', vers: A.xrplAbandon24, montant: '249' })).toContain("frais de l'émetteur compris");
+      expect((await p.envoyer({ actif: 'USD', vers: A.xrplAbandon24, montant: '248.756218' })).SendMax).toEqual(USD('249.99999909'));
+    });
+
+    test('envoi à l\'émetteur lui-même : pas de frais, pas de plafond de débit', async ({ page }) => {
+      const { p } = await ouvrirXrpl(page, C.xrpl.emetteurAvecFrais);
+      const tx = await p.envoyer({ actif: 'USD', vers: A.xrplEmetteur, montant: '250' });
+      expect(tx.SendMax).toBeUndefined();
+      expect(tx.Amount).toEqual(USD('250'));
+    });
+  });
+
   // Correction de T-03 : l'ancienne version n'affichait jamais les erreurs de préparation.
   test('une erreur de préparation est affichée, et la page reste utilisable', async ({ page }) => {
     const { p, etat } = await ouvrirXrpl(page);

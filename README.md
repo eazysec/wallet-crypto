@@ -1,4 +1,4 @@
-# SecuredWallet
+# Pocket Crypto Wallet
 
 Gérer un compte **XRPL** ou **Stellar** en gardant ses clés sur un poste qui ne
 se connecte jamais à internet.
@@ -37,6 +37,24 @@ ou retirer un signataire · désactiver ou réactiver la clé principale · supp
 le compte. Une transaction d'un autre type est refusée à la signature : la
 page 3 ne signe que ce qu'elle sait traduire en clair.
 
+**Envoyer un jeton XRPL.** Certains émetteurs de jetons prélèvent des frais de
+transfert à chaque paiement entre deux comptes. La page 2 lit ces frais sur le
+réseau et les fait payer par l'expéditeur : le destinataire reçoit exactement
+le montant saisi.
+
+- Le disponible indique les frais (exemple : « Frais de l'émetteur : 0,5 % »),
+  et « Max » les déduit du solde.
+- Un montant qui, frais compris, dépasse le solde est refusé.
+- Les pages 2, 3 et 4 affichent ce que vous paierez (exemple : « Vous paierez
+  25,125 USD, dont 0,125 USD de frais de l'émetteur »).
+- Envoyer à l'émetteur, ou depuis l'émetteur, ne coûte pas de frais.
+- La livraison partielle n'est jamais utilisée : avec elle, le destinataire
+  pourrait recevoir moins que le montant, et la transaction serait quand même
+  déclarée réussie. La page 3 refuse de signer un tel paiement.
+
+Stellar n'est pas concerné : un paiement Stellar simple ne comporte pas de frais
+d'émetteur.
+
 ### Fichiers produits
 
 | Fichier | Contient un secret ? |
@@ -63,6 +81,10 @@ transaction : la même aux étapes 2, 3 et 4.
 - Une politique de sécurité du contenu interdit toute connexion aux pages hors
   ligne, et limite les pages en ligne aux serveurs des réseaux.
 - Aucun contenu de fichier n'est interprété comme du HTML (test automatique).
+- Paiement de jeton XRPL : jamais de livraison partielle (F-12). Si l'émetteur
+  prend des frais de transfert, l'expéditeur les paie, et le récapitulatif montre
+  ce qu'il paiera ; le destinataire reçoit exactement le montant. L'étape 3
+  refuse de signer un paiement en livraison partielle.
 - Le fichier wallet est toujours chiffré ; un mot de passe trop faible est refusé.
   Clé dérivée du mot de passe par PBKDF2-HMAC-SHA-256 (1 000 000 d'itérations,
   sel aléatoire), chiffrement authentifié AES-256-GCM : un fichier modifié est
@@ -84,8 +106,6 @@ et [docs/refonte-ui/constats-tests.md](docs/refonte-ui/constats-tests.md))
   XRPL. Vérifiez toujours comme si les fonds étaient réels.
 - **Clé ordinaire XRPL (RegularKey) non prise en charge (T-07)** : seules la clé
   principale et un signataire (multisignature) peuvent signer.
-- **Paiement de jeton XRPL avec livraison partielle (F-12)** : signalé par un
-  avertissement, pas encore corrigé.
 - **Provenance du bundle crypto (F-09)** : `commun/securewalletbundle-2.5.4.js`
   est identique au paquet npm publié, mais sa reconstruction n'est pas encore
   vérifiable (P2-2).
@@ -138,6 +158,3 @@ npm run test:e2e           # Playwright, pages en file://, réseau simulé
   sont seuls à connaître l'écran. Aucune requête ne sort vers internet : le nœud
   XRPL et le serveur Horizon sont simulés.
 - `tests/donnees/` : vecteurs connus (dont SEP-0005) et références.
-
-Règles du code : texte inséré avec `textContent` uniquement ; aucun style ni
-script dans le HTML ; noms en français.

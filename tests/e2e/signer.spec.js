@@ -187,11 +187,35 @@ test.describe('Page 3 · nouvelle interface', () => {
     expect(await p.enVerification()).toBe(false);
   });
 
+  test('F-12 · livraison partielle : signature refusée, sans dérogation', async ({ page }) => {
+    const p = new PiloteSigner(page);
+    await p.ouvrir();
+    const jeton = { currency: 'USD', issuer: A.xrplEmetteur, value: '25' };
+    await p.deposer(aSigner({ ...PAIEMENT_XRPL, Amount: jeton, Flags: 0x00020000 }));
+    expect(await p.erreurChargement()).toContain('livraison partielle');
+    expect(await p.enVerification()).toBe(false);
+  });
+
+  test('F-12 · paiement de jeton avec frais de l\'émetteur : ce que vous paierez est affiché', async ({ page }) => {
+    const p = new PiloteSigner(page);
+    await p.ouvrir();
+    const jeton = (value) => ({ currency: 'USD', issuer: A.xrplEmetteur, value });
+    await p.chargerTransaction(aSigner({ ...PAIEMENT_XRPL, Amount: jeton('25'), SendMax: jeton('25.125') }));
+    expect(await p.lireBordereau()).toMatchObject({ montant: '25', devise: 'USD', debit: "25,125 USD, dont 0,125 USD de frais de l'émetteur" });
+  });
+
   test('champ inattendu dans un paiement : signature refusée', async ({ page }) => {
     const p = new PiloteSigner(page);
     await p.ouvrir();
+    await p.deposer(aSigner({ ...PAIEMENT_XRPL, Paths: [[{ currency: 'USD', issuer: A.xrplEmetteur }]] }));
+    expect(await p.erreurChargement()).toContain('champ inattendu : Paths');
+  });
+
+  test('plafond de débit sur un paiement en XRP : signature refusée', async ({ page }) => {
+    const p = new PiloteSigner(page);
+    await p.ouvrir();
     await p.deposer(aSigner({ ...PAIEMENT_XRPL, SendMax: '99000000' }));
-    expect(await p.erreurChargement()).toContain('champ inattendu : SendMax');
+    expect(await p.erreurChargement()).toContain('plafond de débit (SendMax) incohérent');
   });
 
   test('du HTML dans le fichier est affiché comme du texte, jamais interprété', async ({ page }) => {

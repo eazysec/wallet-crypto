@@ -39,6 +39,77 @@
     return fraction ? `${partieEntiere}.${fraction}` : partieEntiere;
   }
 
+  /** Décimal exact : { n, e } vaut n × 10^e. Accepte la notation scientifique du nœud XRPL. */
+  function lireDecimal(texte) {
+    const morceaux = /^(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i.exec(String(texte).trim());
+    if (!morceaux) throw new RangeError(`Nombre attendu : ${texte}`);
+    const fraction = morceaux[2] || '';
+    return { n: BigInt(morceaux[1] + fraction), e: Number(morceaux[3] || 0) - fraction.length };
+  }
+
+  function ecrireDecimal({ n, e }) {
+    if (e >= 0) return String(n * 10n ** BigInt(e));
+    return decimalDepuisEntier(n, -e);
+  }
+
+  /** Les deux décimaux ramenés au même exposant. */
+  function aligner(a, b) {
+    const e = Math.min(a.e, b.e);
+    return [a.n * 10n ** BigInt(a.e - e), b.n * 10n ** BigInt(b.e - e), e];
+  }
+
+  function comparerDecimaux(a, b) {
+    const [x, y] = aligner(lireDecimal(a), lireDecimal(b));
+    return x < y ? -1 : x > y ? 1 : 0;
+  }
+
+  function soustraireDecimaux(a, b) {
+    const [x, y, e] = aligner(lireDecimal(a), lireDecimal(b));
+    return ecrireDecimal({ n: x - y, e });
+  }
+
+  // ---------- Frais de transfert d'un émetteur de jeton XRPL (F-12) ----------
+  // TransferRate : ce que l'expéditeur paie pour que le destinataire reçoive 1 000 000 000 unités.
+
+  const TAUX_UNITE = 1000000000n;
+  const CHIFFRES_JETON_XRPL = 15;
+
+  function avecFrais(transferRate) {
+    return transferRate !== undefined && transferRate !== null && BigInt(transferRate) > TAUX_UNITE;
+  }
+
+  /** Frais en pourcentage (« 0.5 »), ou null si l'émetteur n'en prend pas. */
+  function tauxFraisEmetteur(transferRate) {
+    return avecFrais(transferRate) ? decimalDepuisEntier(BigInt(transferRate) - TAUX_UNITE, 7) : null;
+  }
+
+  /**
+   * Ce que coûte à l'expéditeur l'envoi de `montant` : montant × taux, arrondi vers le haut à la
+   * précision des jetons XRPL (15 chiffres significatifs). Sert de SendMax.
+   */
+  function debitJeton(montant, transferRate) {
+    if (!avecFrais(transferRate)) return ecrireDecimal(lireDecimal(montant));
+    const { n, e } = lireDecimal(montant);
+    let produit = n * BigInt(transferRate);
+    let exposant = e - 9;
+    const enTrop = String(produit).length - CHIFFRES_JETON_XRPL;
+    if (enTrop > 0) {
+      const diviseur = 10n ** BigInt(enTrop);
+      produit = (produit + diviseur - 1n) / diviseur;
+      exposant += enTrop;
+    }
+    return ecrireDecimal({ n: produit, e: exposant });
+  }
+
+  /** Plus grand montant envoyable avec `solde`, frais compris : solde ÷ taux, arrondi vers le bas à 6 décimales. */
+  function montantMaxJeton(solde, transferRate) {
+    if (!avecFrais(transferRate)) return solde;
+    const { n, e } = lireDecimal(solde);
+    const echelle = e + 6;
+    const numerateur = (echelle >= 0 ? n * 10n ** BigInt(echelle) : n / 10n ** BigInt(-echelle)) * TAUX_UNITE;
+    return decimalDepuisEntier(numerateur / BigInt(transferRate), 6);
+  }
+
   /** 1 XRP = 1 000 000 drops. */
   function dropsEnXrp(drops) {
     return decimalDepuisEntier(drops, 6);
@@ -71,13 +142,14 @@
 
   const CHAMPS_COMMUNS_XRPL = ['TransactionType', 'Account', 'Fee', 'Sequence', 'LastLedgerSequence', 'Flags', 'SigningPubKey', 'TxnSignature', 'Signers', 'NetworkID'];
   const CHAMPS_XRPL = {
-    Payment: ['Destination', 'Amount', 'DestinationTag'],
+    Payment: ['Destination', 'Amount', 'DestinationTag', 'SendMax'],
     TrustSet: ['LimitAmount'],
     AccountDelete: ['Destination', 'DestinationTag'],
     SignerListSet: ['SignerQuorum', 'SignerEntries'],
     AccountSet: ['SetFlag', 'ClearFlag'],
   };
   const DRAPEAU_PAIEMENT_PARTIEL = 0x00020000;
+  const DRAPEAU_SIGNATURE_CANONIQUE = 0x80000000;
   const ASF_DESACTIVER_CLE_PRINCIPALE = 4;
 
   function lisibleXrpl(transaction) {
@@ -104,12 +176,24 @@
     switch (tx.TransactionType) {
       case 'Payment': {
         const jeton = typeof tx.Amount === 'object';
+        // Seule l'option de signature canonique est admise : la livraison partielle (F-12) et les
+        // options de chemin changent ce que reçoit le destinataire.
+        const options = ((tx.Flags || 0) & ~DRAPEAU_SIGNATURE_CANONIQUE) >>> 0;
+        if (options & DRAPEAU_PAIEMENT_PARTIEL) return { ...base, operation: 'inconnue', raison: 'livraison partielle : le destinataire pourrait recevoir moins que le montant' };
+        if (options) return { ...base, operation: 'inconnue', raison: 'option de paiement non reconnue' };
+        let debit = null;
+        if (tx.SendMax !== undefined) {
+          const max = tx.SendMax;
+          const memeJeton = jeton && typeof max === 'object' && max.currency === tx.Amount.currency && max.issuer === tx.Amount.issuer;
+          if (!memeJeton || comparerDecimaux(max.value, tx.Amount.value) < 0) return { ...base, operation: 'inconnue', raison: 'plafond de débit (SendMax) incohérent' };
+          debit = max.value;
+        }
         return {
           ...base, operation: 'paiement', vers: tx.Destination, tag: texteOuNul(tx.DestinationTag),
           montant: jeton ? tx.Amount.value : dropsEnXrp(tx.Amount),
           devise: jeton ? deviseLisible(tx.Amount.currency) : 'XRP',
           emetteur: jeton ? tx.Amount.issuer : null,
-          livraisonPartielle: ((tx.Flags || 0) & DRAPEAU_PAIEMENT_PARTIEL) !== 0,
+          debit, fraisEmetteur: debit === null ? null : soustraireDecimaux(debit, tx.Amount.value),
         };
       }
       case 'TrustSet': {
@@ -256,7 +340,7 @@
 
   exporter('Transactions', {
     LIBELLES, libelleReseau, libelleFonds, dropsEnXrp, stroopsEnXlm, montantStellar, deviseLisible,
-    versionMultisignature, decoder, empreinte, echeance,
+    versionMultisignature, decoder, empreinte, echeance, tauxFraisEmetteur, debitJeton, montantMaxJeton,
   });
 })(function (nom, api) {
   if (typeof module === 'object' && module.exports) module.exports = api;

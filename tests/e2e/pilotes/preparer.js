@@ -113,8 +113,22 @@ class PilotePreparer {
     return this.page.locator('#envoi-premiere-fois').isVisible();
   }
 
-  async montantMax() {
+  /** Texte d'un champ du bordereau de vérification, ou null s'il est absent. */
+  async champBordereau(champ) {
+    const cible = this.page.locator(`#bordereau [data-champ="${champ}"] dd`);
+    return (await cible.count()) ? (await cible.innerText()).replace(/\s+/g, ' ').trim() : null;
+  }
+
+  /** Remplit l'envoi et prépare, sans exporter : la page montre le bordereau de vérification. */
+  async preparerEnvoi(details) {
+    await this.remplirEnvoi(details);
+    await this.page.click('#envoi-preparer');
+    await expect(this.page.locator('#vue-verifier')).toBeVisible();
+  }
+
+  async montantMax(actif) {
     await this.ouvrirOperation('envoyer');
+    if (actif) await this.page.locator(`#envoi-actifs button[data-valeur="${actif}"]`).click();
     await this.page.click('#envoi-max');
     return this.page.inputValue('#envoi-montant');
   }

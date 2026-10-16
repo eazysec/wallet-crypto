@@ -34,6 +34,13 @@
     return dd;
   }
 
+  /** F-12 : montant + frais de l'émetteur du jeton, tels que plafonnés par la transaction. */
+  function ddDebit(d) {
+    const dd = ddMontant(d.debit, d.devise, false);
+    dd.append(`, dont ${montantLisible(d.fraisEmetteur)} ${d.devise} de frais de l'émetteur`);
+    return dd;
+  }
+
   function champ(nom, libelle, dd, disposition) {
     const bloc = element('div', disposition || '');
     bloc.dataset.champ = nom;
@@ -51,6 +58,7 @@
       case 'paiement':
         return [
           champ('montant', 'Montant', ddMontant(d.montant, d.devise, true), 'large'),
+          ...(d.debit ? [champ('debit', 'Vous paierez', ddDebit(d), 'large')] : []),
           champ('vers', 'Destinataire', ddAdresse(d.vers), 'large'),
           ...(d.emetteur ? [champ('emetteur', 'Émetteur du jeton', ddAdresse(d.emetteur), 'large')] : []),
           tag,
@@ -109,11 +117,6 @@
 
     const notes = [];
     if (d.creationCompte) notes.push(element('p', 'message', "Le compte destinataire n'existe pas encore : ce paiement le crée."));
-    if (d.livraisonPartielle) {
-      const note = element('p', 'message message--attention');
-      note.append(element('b', '', 'Livraison partielle autorisée.'), ' Le destinataire peut recevoir moins que ce montant.');
-      notes.push(note);
-    }
     if (d.multisignature) {
       const note = element('p', 'etat', d.chaine === 'XRPL'
         ? "Signée par un signataire, pas par la clé principale du compte : frais doublés, comme l'exige le réseau."

@@ -7,7 +7,7 @@
       "value": "25",
       "issuer": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
    },
-   "Flags": 131072,
+   "Flags": 0,
    "Sequence": 81204812,
    "Fee": "12",
    "LastLedgerSequence": 90000225

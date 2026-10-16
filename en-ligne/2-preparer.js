@@ -103,10 +103,18 @@
     const signataires = listes.length ? listes[0].SignerEntries.map((e) => e.SignerEntry.Account) : [];
     const drapeaux = info.result.account_flags;
     const principaleActive = drapeaux ? !drapeaux.disableMasterKey : (donnees.Flags & 0x00100000) === 0;
+    // F-12 : frais de transfert de chaque émetteur, à ajouter au débit d'un envoi de jeton.
+    const emetteurs = [...new Set(lignes.result.lines.map((l) => l.account))];
+    const taux = new Map(await Promise.all(emetteurs.map(async (e) => {
+      const reponse = await client.request({ command: 'account_info', account: e, ledger_index: 'validated' });
+      return [e, reponse.result.account_data.TransferRate];
+    })));
     return {
       adresse, signataires, principaleActive, sequence: donnees.Sequence, registre: registre.seq,
       solde: depuisEntier(solde, 6), reserve: depuisEntier(reserve, 6), disponible: depuisEntier(solde - reserve, 6),
-      jetons: lignes.result.lines.map((l) => ({ code: Transactions.deviseLisible(l.currency), codeBrut: l.currency, emetteur: l.account, solde: l.balance })),
+      jetons: lignes.result.lines.map((l) => ({
+        code: Transactions.deviseLisible(l.currency), codeBrut: l.currency, emetteur: l.account, solde: l.balance, transferRate: taux.get(l.account),
+      })),
       // La clé ordinaire (RegularKey) n'est pas prise en charge : l'étape 3 signe toute autre clé en multisignature.
       autorises: [...(principaleActive ? [adresse] : []), ...signataires],
     };
@@ -187,8 +195,10 @@
         const tx = { TransactionType: 'Payment', Destination: vers };
         if (jeton) {
           // T-06 : le montant est transmis tel quel (l'ancienne page retirait aussi les zéros sans virgule).
+          // F-12 : jamais de livraison partielle. Les frais de l'émetteur sont payés par l'expéditeur,
+          // dans la limite de SendMax ; le destinataire reçoit exactement le montant.
           tx.Amount = { currency: jeton.codeBrut, value: montant, issuer: jeton.emetteur };
-          tx.Flags = xrpl.PaymentFlags.tfPartialPayment;
+          if (fraisEmetteurApplicables(jeton, vers)) tx.SendMax = { ...tx.Amount, value: Transactions.debitJeton(montant, jeton.transferRate) };
         } else {
           tx.Amount = xrpl.xrpToDrops(montant);
         }
@@ -371,10 +381,16 @@
     actualiserDestinataire();
   }
 
+  /** Pas de frais quand on envoie à l'émetteur ou depuis l'émetteur. */
+  function fraisEmetteurApplicables(jeton, vers) {
+    return !!Transactions.tauxFraisEmetteur(jeton.transferRate) && vers !== jeton.emetteur && etat.compte.adresse !== jeton.emetteur;
+  }
+
   function actualiserDisponible() {
     const jeton = jetonChoisi('envoi-actifs');
+    const taux = jeton && Transactions.tauxFraisEmetteur(jeton.transferRate);
     parId('envoi-disponible').textContent = jeton
-      ? `Disponible : ${lisible(jeton.solde)} ${jeton.code}.`
+      ? `Disponible : ${lisible(jeton.solde)} ${jeton.code}.${taux ? ` Frais de l'émetteur : ${lisible(taux)} %, en plus du montant (sauf envoi à l'émetteur).` : ''}`
       : `Disponible : ${lisible(etat.compte.disponible)} ${chaine().devise}. Frais réseau : environ ${lisible(depuisEntier(chaine().fraisEstimes, chaine().decimales))} ${chaine().devise}.`;
   }
 
@@ -392,7 +408,7 @@
 
   function montantMax() {
     const jeton = jetonChoisi('envoi-actifs');
-    if (jeton) return jeton.solde;
+    if (jeton) return Transactions.montantMaxJeton(jeton.solde, jeton.transferRate);
     const d = chaine().decimales;
     return depuisEntier(enEntier(etat.compte.disponible, d) - chaine().fraisEstimes, d);
   }
@@ -420,7 +436,9 @@
     const jeton = jetonChoisi('envoi-actifs');
     const erreur = erreurDestinataire(vers)
       || (tag && !chaine().tagValide(tag) ? chaine().erreurTag : '')
-      || erreurMontant(montant, jeton ? 15 : chaine().decimales, jeton ? jeton.solde : etat.compte.disponible);
+      || erreurMontant(montant, jeton ? 15 : chaine().decimales, jeton ? jeton.solde : etat.compte.disponible)
+      || (jeton && fraisEmetteurApplicables(jeton, vers) && enEntier(Transactions.debitJeton(montant, jeton.transferRate), 15) > enEntier(jeton.solde, 15)
+        ? `Le montant dépasse le disponible, frais de l'émetteur compris (au plus ${lisible(montantMax())} ${jeton.code}).` : '');
     if (erreur) return montrerErreur('envoi-erreur', erreur);
     await preparer('envoyer', 'envoi-preparer', 'envoi-erreur', { vers, tag, montant, jeton });
   }

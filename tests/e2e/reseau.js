@@ -65,6 +65,7 @@ function repondreXrpl(req, x) {
           Account: req.account, Balance: compte.solde, Flags: compte.desactiverPrincipale ? 0x00100000 : 0,
           LedgerEntryType: 'AccountRoot', OwnerCount: compte.objets || 0, PreviousTxnID: 'C'.repeat(64),
           PreviousTxnLgrSeq: 1, Sequence: compte.sequence, index: 'D'.repeat(64),
+          ...(compte.transferRate ? { TransferRate: compte.transferRate } : {}),
         },
         account_flags: { disableMasterKey: !!compte.desactiverPrincipale, requireDestinationTag: false },
         ledger_index: x.registre,
